@@ -1,6 +1,8 @@
 {
   "eslint.validate": ["javascript", "typescript", "typescriptreact"],
   "eslint.useFlatConfig": true,
+  "eslint.workingDirectories": ["."],
+  "eslint.runtime": "node",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   }
