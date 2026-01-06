@@ -1,7 +1,19 @@
 {
   "name": "@sanity/lint-core",
   "version": "0.0.1",
-  "description": "Core types and utilities for Sanity linting tools",
+  "description": "Shared types and utilities for Sanity Lint",
+  "author": "Sanity.io <hello@sanity.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanity-io/sanity-lint.git",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "sanity",
+    "lint",
+    "eslint"
+  ],
   "type": "module",
   "exports": {
     ".": {
@@ -15,7 +27,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

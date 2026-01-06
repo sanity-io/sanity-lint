@@ -50,7 +50,9 @@ export const rules: Rule[] = [
 /**
  * Rules indexed by ID for quick lookup
  */
-export const rulesById: Record<string, Rule> = Object.fromEntries(rules.map((rule) => [rule.id, rule]))
+export const rulesById: Record<string, Rule> = Object.fromEntries(
+  rules.map((rule) => [rule.id, rule])
+)
 
 // Re-export individual rules for direct imports
 export {

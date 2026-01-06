@@ -5,6 +5,7 @@ Sanity Developer Experience Suite - linting, formatting, and static analysis for
 ## Architecture
 
 ### Monorepo Structure
+
 - **Package manager**: pnpm workspaces
 - **Build orchestration**: Turborepo
 - **Testing**: Vitest with custom RuleTester pattern
@@ -13,13 +14,14 @@ Sanity Developer Experience Suite - linting, formatting, and static analysis for
 
 ### Packages
 
-| Package | npm Name | Purpose |
-|---------|----------|---------|
-| `packages/core` | `@sanity/lint-core` | Shared types, RuleTester, reporters |
-| `packages/groq-lint` | `@sanity/groq-lint` | GROQ query linting rules |
-| `packages/eslint-plugin` | `eslint-plugin-sanity` | ESLint integration |
+| Package                  | npm Name               | Purpose                             |
+| ------------------------ | ---------------------- | ----------------------------------- |
+| `packages/core`          | `@sanity/lint-core`    | Shared types, RuleTester, reporters |
+| `packages/groq-lint`     | `@sanity/groq-lint`    | GROQ query linting rules            |
+| `packages/eslint-plugin` | `eslint-plugin-sanity` | ESLint integration                  |
 
 ### Dependency Graph
+
 ```
 @sanity/lint-core
        ↓
@@ -29,6 +31,7 @@ Sanity Developer Experience Suite - linting, formatting, and static analysis for
 ## Development
 
 ### Commands
+
 ```bash
 pnpm install          # Install dependencies
 pnpm build            # Build all packages
@@ -52,6 +55,7 @@ Use `/add-rule` skill to scaffold automatically.
 ### Rule Implementation
 
 Every rule must:
+
 - Have a unique `id` matching the filename (kebab-case)
 - Have `name`, `description`, `severity`
 - Implement the `check(ast)` method
@@ -70,7 +74,7 @@ export const joinInFilter: Rule = {
 
   check(ast, context) {
     // Implementation
-  }
+  },
 }
 ```
 
@@ -88,20 +92,21 @@ const tester = new RuleTester()
 tester.run('join-in-filter', joinInFilter, {
   valid: [
     '*[_type == "post"]',
-    '*[_type == "post"]{ author-> }',  // projection OK
+    '*[_type == "post"]{ author-> }', // projection OK
   ],
   invalid: [
     {
       code: '*[author->name == "Bob"]',
-      errors: [{ ruleId: 'join-in-filter' }]
-    }
-  ]
+      errors: [{ ruleId: 'join-in-filter' }],
+    },
+  ],
 })
 ```
 
 ### Commit Messages
 
 Follow Conventional Commits:
+
 ```
 feat(groq-lint): add join-in-filter rule
 fix(core): handle empty query input
@@ -112,10 +117,13 @@ docs: update README with usage examples
 ## Key References
 
 ### Rule Specifications
+
 See `.claude/reference/rules.yaml` for the canonical rule definitions from Rust groq-lint.
 
 ### GROQ AST Types
+
 The `groq-js` package exports AST types:
+
 - `ExprNode` - Base expression node
 - `FilterNode` - `*[constraint]`
 - `ProjectionNode` - `{ field1, field2 }`
@@ -123,6 +131,7 @@ The `groq-js` package exports AST types:
 - See `.claude/reference/groq-ast-types.md` for full reference
 
 ### External Resources
+
 - [groq-lint (Rust)](https://github.com/sanity-io/groq-lint) - Reference implementation
 - [groq-js](https://github.com/sanity-io/groq-js) - GROQ parser we use
 - [groq-test-suite](https://github.com/sanity-io/groq-test-suite) - Test corpus
@@ -131,19 +140,24 @@ The `groq-js` package exports AST types:
 ## Quality Standards
 
 ### Test Coverage
+
 - Rules: 100% coverage required
 - Core utilities: 90%+ coverage
 - Integration tests for ESLint plugin
 
 ### CI Checks
+
 All PRs must pass:
+
 - [ ] Type check (`pnpm typecheck`)
 - [ ] Lint (`pnpm lint`)
 - [ ] Tests (`pnpm test`)
 - [ ] Build (`pnpm build`)
 
 ### Rust Parity
+
 When porting rules from groq-lint:
+
 - Must produce identical findings for the same query
 - Run `pnpm test:rust-parity` to verify
 - Document any intentional differences

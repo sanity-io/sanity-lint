@@ -31,7 +31,9 @@ export function formatFindings(query: string, findings: Finding[]): string {
         const caretPadding = ' '.repeat(column - 1)
         const caretLength = Math.max(
           1,
-          finding.span.end.line === line ? finding.span.end.column - column : lineContent.length - column + 1
+          finding.span.end.line === line
+            ? finding.span.end.column - column
+            : lineContent.length - column + 1
         )
         const caret = '^'.repeat(caretLength)
         output.push(`   | ${caretPadding}${caret}`)

@@ -1,44 +1,107 @@
-# @sanity/dev-tools
+# Sanity Lint
 
-> Linting, formatting, and static analysis for Sanity projects
+> Linting tools for Sanity projects
 
-This monorepo contains developer tools for building better Sanity applications.
+Catch performance issues and best practice violations in your Sanity code before they hit production.
 
-## Packages
+## What's Inside
 
-| Package | Description | Status |
-|---------|-------------|--------|
-| [@sanity/lint-core](./packages/core) | Core types and utilities | 🚧 In Development |
-| [@sanity/groq-lint](./packages/groq-lint) | GROQ query linting | 🚧 In Development |
-| [eslint-plugin-sanity](./packages/eslint-plugin) | ESLint integration | 📋 Planned |
+This monorepo contains linting tools for Sanity, with integrations for different development environments:
+
+### Integrations
+
+| Package                                              | Description                                       |
+| ---------------------------------------------------- | ------------------------------------------------- |
+| **[eslint-plugin-sanity](./packages/eslint-plugin)** | ESLint plugin - use lint rules in your IDE and CI |
+| **[@sanity/groq-lint](./packages/groq-lint)**        | Standalone CLI for linting GROQ queries           |
+
+### Core Libraries
+
+| Package                                       | Description                     |
+| --------------------------------------------- | ------------------------------- |
+| [@sanity/groq-lint](./packages/groq-lint)     | GROQ linting engine and rules   |
+| [@sanity/schema-lint](./packages/schema-lint) | Schema linting engine and rules |
+| [@sanity/lint-core](./packages/core)          | Shared types and utilities      |
+
+> **Future integrations**: VS Code extension, Sanity Studio plugin, and more can be built on top of the core libraries.
 
 ## Quick Start
 
+### ESLint Plugin
+
+The easiest way to use Sanity Lint is through the ESLint plugin:
+
 ```bash
-# Install dependencies
-pnpm install
-
-# Build all packages
-pnpm build
-
-# Run tests
-pnpm test
-
-# Lint a GROQ query
-pnpm --filter @sanity/groq-lint exec groq-lint -q '*[author->name == "Bob"]'
+npm install eslint-plugin-sanity --save-dev
 ```
 
-## GROQ Lint Rules
+```js
+// eslint.config.js (ESLint 9+ flat config)
+import sanity from 'eslint-plugin-sanity'
 
-The linter checks for performance anti-patterns and correctness issues:
+export default [
+  sanity.configs.recommended,
+  // ... your other configs
+]
+```
 
-| Rule | Severity | Description |
-|------|----------|-------------|
-| `join-in-filter` | error | Avoid `->` inside filters |
-| `deep-pagination` | warning | Avoid large slice offsets |
-| `computed-value-in-filter` | error | Avoid arithmetic in filters |
-| `non-literal-comparison` | error | Avoid comparing two fields |
-| ... | ... | More rules coming |
+This gives you IDE integration (VS Code, Cursor, etc.) and CI linting for both GROQ queries and schema definitions.
+
+### Standalone CLI
+
+For linting GROQ queries without ESLint:
+
+```bash
+# Lint a query directly
+npx @sanity/groq-lint -q '*[author->name == "Bob"]'
+
+# Lint a file
+npx @sanity/groq-lint query.groq
+
+# JSON output for CI
+npx @sanity/groq-lint --json query.groq
+```
+
+## Rules
+
+**27 lint rules** (14 GROQ + 13 Schema) to catch common issues.
+
+### GROQ Rules
+
+| Rule                                | Severity | Description                                |
+| ----------------------------------- | -------- | ------------------------------------------ |
+| `groq-join-in-filter`               | error    | Avoid `->` dereferences inside filters     |
+| `groq-deep-pagination`              | warn     | Avoid large slice offsets                  |
+| `groq-large-pages`                  | warn     | Avoid fetching too many documents          |
+| `groq-many-joins`                   | warn     | Avoid queries with many joins              |
+| `groq-computed-value-in-filter`     | warn     | Avoid arithmetic in filters                |
+| `groq-non-literal-comparison`       | warn     | Avoid comparing two dynamic values         |
+| `groq-order-on-expr`                | warn     | Avoid ordering by expressions              |
+| `groq-very-large-query`             | warn     | Query text approaching size limits         |
+| `groq-extremely-large-query`        | error    | Query text exceeds safe size limits        |
+| `groq-join-to-get-id`               | warn     | Unnecessary join to get `_id`              |
+| `groq-repeated-dereference`         | warn     | Same reference dereferenced multiple times |
+| `groq-match-on-id`                  | warn     | Using `match` on `_id` field               |
+| `groq-count-in-correlated-subquery` | warn     | `count()` in correlated subquery           |
+| `groq-deep-pagination-param`        | warn     | Pagination offset from parameter           |
+
+### Schema Rules
+
+| Rule                                 | Severity | Description                               |
+| ------------------------------------ | -------- | ----------------------------------------- |
+| `schema-missing-define-type`         | error    | Schema must use `defineType()`            |
+| `schema-missing-define-field`        | error    | Fields must use `defineField()`           |
+| `schema-reserved-field-name`         | error    | Avoid `_id`, `_type`, etc. field names    |
+| `schema-missing-icon`                | warn     | Document/object types should have icons   |
+| `schema-missing-title`               | warn     | Types should have titles                  |
+| `schema-presentation-field-name`     | warn     | Avoid presentation-focused names          |
+| `schema-missing-slug-source`         | warn     | Slug fields need `options.source`         |
+| `schema-missing-required-validation` | warn     | Critical fields need validation           |
+| `schema-heading-level-in-schema`     | warn     | Don't store heading levels in schema      |
+| `schema-missing-description`         | off      | Fields should have descriptions           |
+| `schema-boolean-instead-of-list`     | off      | Prefer `options.list` over boolean        |
+| `schema-array-missing-constraints`   | off      | Arrays should have constraints            |
+| `schema-unnecessary-reference`       | off      | Consider embedding instead of referencing |
 
 ## Development
 
@@ -53,29 +116,31 @@ The linter checks for performance anti-patterns and correctness issues:
 pnpm install        # Install dependencies
 pnpm build          # Build all packages
 pnpm test           # Run tests
-pnpm test:watch     # Run tests in watch mode
 pnpm lint           # Lint codebase
 pnpm typecheck      # Type check
-pnpm format         # Format with Prettier
 ```
 
-### Adding a New Rule
+### Adding Rules
 
-1. Create `packages/groq-lint/src/rules/{rule-name}.ts`
-2. Create `packages/groq-lint/src/rules/__tests__/{rule-name}.test.ts`
-3. Export from `packages/groq-lint/src/rules/index.ts`
-4. Run `pnpm test` to verify
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for details on adding new lint rules.
 
-See [CLAUDE.md](./CLAUDE.md) for detailed conventions.
+## Architecture
 
-## Roadmap
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Integrations                        │
+├──────────────────┬──────────────────┬──────────────────┤
+│  eslint-plugin   │   CLI (groq)     │  (future: vscode)│
+├──────────────────┴──────────────────┴──────────────────┤
+│                    Core Libraries                       │
+├─────────────────────────┬──────────────────────────────┤
+│    @sanity/groq-lint    │    @sanity/schema-lint       │
+├─────────────────────────┴──────────────────────────────┤
+│                   @sanity/lint-core                     │
+└─────────────────────────────────────────────────────────┘
+```
 
-- [x] Phase 0: Project setup and test infrastructure
-- [ ] Phase 1: Port all GROQ lint rules from Rust
-- [ ] Phase 2: ESLint plugin integration
-- [ ] Phase 3: Schema linting
-- [ ] Phase 4: TypeGen enforcement
-- [ ] Phase 5+: LSP, formatting, advanced analysis
+The core libraries (`@sanity/groq-lint`, `@sanity/schema-lint`) are decoupled from any specific integration, making it easy to build new tools on top of them.
 
 ## License
 

@@ -43,7 +43,9 @@ function isLiteral(node: ExprNode): boolean {
 /**
  * Check if a node is an arithmetic operation
  */
-function isArithmeticOp(node: ExprNode): node is ExprNode & { op: string; left: ExprNode; right: ExprNode } {
+function isArithmeticOp(
+  node: ExprNode
+): node is ExprNode & { op: string; left: ExprNode; right: ExprNode } {
   return node.type === 'OpCall' && ARITHMETIC_OPS.includes((node as { op?: string }).op ?? '')
 }
 

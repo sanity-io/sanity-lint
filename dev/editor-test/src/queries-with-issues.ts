@@ -42,7 +42,7 @@ export const queryWithManyJoins = groq`
   }
 `
 
-// ⚠️ WARNING: Repeated dereference - resolve once instead
+// ⚠️ WARNING: Repeated dereference - same reference dereferenced multiple times
 export const repeatedDeref = groq`
   *[_type == "post"]{
     "authorName": author->name,
@@ -83,3 +83,19 @@ export const countCorrelated = groq`
     "postCount": count(*[_type == "post" && category._ref == ^._id])
   }
 `
+
+// ⚠️ WARNING: Very large query (> 50KB)
+// Note: This is a placeholder - actual 50KB+ query would be impractical in source
+// The rule triggers at 50KB, which would be ~50,000 characters
+export const veryLargeQueryPlaceholder = groq`
+  *[_type == "post"]{
+    // In practice, a query this large would have many fields and projections
+    // This is just to document the rule exists
+    title
+  }
+`
+
+// Note: extremely-large-query (100KB+) and deep-pagination-param (parameter-based offset)
+// are not practical to demonstrate in editor test files:
+// - extremely-large-query: Would require 100KB of text in a template literal
+// - deep-pagination-param: groq-js doesn't support parameters in slice expressions yet

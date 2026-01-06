@@ -3,15 +3,17 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Test files for validating GROQ linting in VS Code, Cursor, and other editors",
+  "description": "Test files for validating GROQ and schema linting in VS Code, Cursor, and other editors",
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@sanity/icons": "^3.0.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.0.0",
     "eslint-plugin-sanity": "workspace:*",
+    "sanity": "^5.1.0",
     "typescript": "^5.5.0"
   },
   "dependencies": {

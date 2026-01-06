@@ -39,7 +39,7 @@ export const repeatedDereference: Rule = {
   category: 'performance',
 
   check(ast, context) {
-    walk(ast, (node, walkContext) => {
+    walk(ast, (node, _walkContext) => {
       // Only check Projection nodes
       if (node.type !== 'Projection') return
 

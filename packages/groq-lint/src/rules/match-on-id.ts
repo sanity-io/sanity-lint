@@ -28,7 +28,8 @@ export const matchOnId: Rule = {
           const name = (left as { name?: string }).name
           if (name === '_id') {
             context.report({
-              message: '`match` is designed for full-text matching and may not work as expected on `_id`.',
+              message:
+                '`match` is designed for full-text matching and may not work as expected on `_id`.',
               severity: 'info',
               help: 'Consider using `==` for exact matches or `string::startsWith()` for prefix matching.',
             })

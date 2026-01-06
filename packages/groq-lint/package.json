@@ -1,7 +1,14 @@
 {
   "name": "@sanity/groq-lint",
   "version": "0.0.1",
-  "description": "Lint GROQ queries for performance and correctness issues",
+  "description": "GROQ linting engine, rules, and CLI for Sanity Lint",
+  "author": "Sanity.io <hello@sanity.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanity-io/sanity-lint.git",
+    "directory": "packages/groq-lint"
+  },
   "type": "module",
   "exports": {
     ".": {
@@ -14,7 +21,9 @@
   "bin": {
     "groq-lint": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -30,5 +39,10 @@
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   },
-  "keywords": ["sanity", "groq", "lint", "linter"]
+  "keywords": [
+    "sanity",
+    "groq",
+    "lint",
+    "linter"
+  ]
 }

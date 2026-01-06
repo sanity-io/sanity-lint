@@ -7,14 +7,7 @@ export { rules, rulesById } from './rules'
 export { joinInFilter } from './rules/join-in-filter'
 
 // Re-export types from core
-export type {
-  Rule,
-  RuleConfig,
-  LinterConfig,
-  Finding,
-  Severity,
-  Category,
-} from '@sanity/lint-core'
+export type { Rule, RuleConfig, LinterConfig, Finding, Severity, Category } from '@sanity/lint-core'
 
 // Re-export utilities from core
 export { formatFindings, formatFindingsJson, summarizeFindings } from '@sanity/lint-core'

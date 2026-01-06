@@ -1,23 +1,18 @@
 import type { Rule as ESLintRule } from 'eslint'
 import type { TSESTree } from '@typescript-eslint/types'
-import type { Rule as GroqRule, Severity } from '@sanity/groq-lint'
-import { lint } from '@sanity/groq-lint'
+import type { Rule as GroqRule } from '@sanity/groq-lint'
+import { lint, rules as allGroqRules } from '@sanity/groq-lint'
 import { isGroqTaggedTemplate, extractGroqString } from './groq-extractor'
 
 /**
- * Map GROQ lint severity to ESLint severity
+ * Build a config that enables only the specified rule
  */
-function mapSeverity(severity: Severity): 0 | 1 | 2 {
-  switch (severity) {
-    case 'error':
-      return 2
-    case 'warning':
-      return 1
-    case 'info':
-      return 1 // ESLint doesn't have 'info', use warning
-    default:
-      return 1
+function buildSingleRuleConfig(ruleId: string): Record<string, boolean> {
+  const config: Record<string, boolean> = {}
+  for (const rule of allGroqRules) {
+    config[rule.id] = rule.id === ruleId
   }
+  return config
 }
 
 /**
@@ -39,24 +34,24 @@ export function createESLintRule(groqRule: GroqRule): ESLintRule.RuleModule {
 
     create(context) {
       return {
-        TaggedTemplateExpression(node: TSESTree.TaggedTemplateExpression) {
+        TaggedTemplateExpression(eslintNode: ESLintRule.Node) {
+          // Cast to our TSESTree type for type-safe property access
+          const node = eslintNode as unknown as TSESTree.TaggedTemplateExpression
           if (!isGroqTaggedTemplate(node)) {
             return
           }
 
           try {
             const query = extractGroqString(node)
-            const result = lint(query, { rules: [groqRule] })
+            const result = lint(query, { rules: buildSingleRuleConfig(groqRule.id) })
 
             for (const finding of result.findings) {
               if (finding.ruleId === groqRule.id) {
                 context.report({
-                  node: node as unknown as ESLintRule.Node,
+                  node: eslintNode,
                   messageId: groqRule.id,
                   data: {
-                    message: finding.help
-                      ? `${finding.message} ${finding.help}`
-                      : finding.message,
+                    message: finding.help ? `${finding.message} ${finding.help}` : finding.message,
                   },
                 })
               }
@@ -73,9 +68,7 @@ export function createESLintRule(groqRule: GroqRule): ESLintRule.RuleModule {
 /**
  * Create all ESLint rules from GROQ lint rules.
  */
-export function createAllRules(
-  groqRules: GroqRule[]
-): Record<string, ESLintRule.RuleModule> {
+export function createAllRules(groqRules: GroqRule[]): Record<string, ESLintRule.RuleModule> {
   const eslintRules: Record<string, ESLintRule.RuleModule> = {}
 
   for (const rule of groqRules) {

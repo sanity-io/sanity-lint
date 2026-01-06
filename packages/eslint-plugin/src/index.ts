@@ -1,7 +1,8 @@
 /**
  * ESLint plugin for Sanity
  *
- * This plugin provides rules for linting GROQ queries in JavaScript/TypeScript files.
+ * This plugin provides rules for linting GROQ queries and schema definitions
+ * in JavaScript/TypeScript files.
  *
  * @example
  * ```js
@@ -13,6 +14,7 @@
  *     plugins: { sanity },
  *     rules: {
  *       'sanity/groq-join-in-filter': 'error',
+ *       'sanity/schema-missing-icon': 'warn',
  *     },
  *   },
  * ]
@@ -30,10 +32,21 @@
 
 import type { ESLint, Linter } from 'eslint'
 import { rules as groqRules } from '@sanity/groq-lint'
+import { rules as schemaRules } from '@sanity/schema-lint'
 import { createAllRules } from './utils/rule-factory'
+import { createAllSchemaRules } from './utils/schema-rule-factory'
 
 // Create ESLint rules from all GROQ lint rules
-const rules = createAllRules(groqRules)
+const groqEslintRules = createAllRules(groqRules)
+
+// Create ESLint rules from all schema lint rules
+const schemaEslintRules = createAllSchemaRules(schemaRules)
+
+// Combine all rules
+const rules = {
+  ...groqEslintRules,
+  ...schemaEslintRules,
+}
 
 // Build the plugin object
 const plugin: ESLint.Plugin = {
@@ -50,6 +63,8 @@ const recommended: Linter.Config = {
     sanity: plugin,
   },
   rules: {
+    // === GROQ Rules ===
+
     // Errors - these are serious performance or correctness issues
     'sanity/groq-join-in-filter': 'error',
 
@@ -69,6 +84,27 @@ const recommended: Linter.Config = {
     'sanity/groq-match-on-id': 'warn',
     'sanity/groq-count-in-correlated-subquery': 'warn',
     'sanity/groq-deep-pagination-param': 'warn',
+
+    // === Schema Rules ===
+
+    // Errors - correctness issues
+    'sanity/schema-missing-define-type': 'error',
+    'sanity/schema-missing-define-field': 'error',
+    'sanity/schema-reserved-field-name': 'error',
+
+    // Warnings - best practice violations
+    'sanity/schema-missing-icon': 'warn',
+    'sanity/schema-missing-title': 'warn',
+    'sanity/schema-presentation-field-name': 'warn',
+    'sanity/schema-missing-slug-source': 'warn',
+    'sanity/schema-missing-required-validation': 'warn',
+    'sanity/schema-heading-level-in-schema': 'warn',
+
+    // Info - suggestions (off by default)
+    'sanity/schema-missing-description': 'off',
+    'sanity/schema-boolean-instead-of-list': 'off',
+    'sanity/schema-array-missing-constraints': 'off',
+    'sanity/schema-unnecessary-reference': 'off',
   },
 }
 

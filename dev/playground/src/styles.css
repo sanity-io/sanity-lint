@@ -178,6 +178,12 @@ textarea::placeholder {
   margin-right: 1rem;
 }
 
-.stats .error-count { color: #f44336; }
-.stats .warning-count { color: #ff9800; }
-.stats .info-count { color: #2196f3; }
+.stats .error-count {
+  color: #f44336;
+}
+.stats .warning-count {
+  color: #ff9800;
+}
+.stats .info-count {
+  color: #2196f3;
+}

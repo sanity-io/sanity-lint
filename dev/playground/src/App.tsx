@@ -87,11 +87,7 @@ export function App() {
             <h3>Try an example</h3>
             <div className="example-buttons">
               {Object.keys(EXAMPLES).map((name) => (
-                <button
-                  key={name}
-                  className="example-btn"
-                  onClick={() => setQuery(EXAMPLES[name])}
-                >
+                <button key={name} className="example-btn" onClick={() => setQuery(EXAMPLES[name])}>
                   {name}
                 </button>
               ))}
@@ -105,14 +101,16 @@ export function App() {
             {results.findings.length === 0 ? (
               <div className="no-issues">No issues found</div>
             ) : (
-              results.findings.map((finding, i) => (
-                <ResultItem key={i} finding={finding} />
-              ))
+              results.findings.map((finding, i) => <ResultItem key={i} finding={finding} />)
             )}
           </div>
           <div className="stats">
-            <span className="error-count">{errorCount} error{errorCount !== 1 ? 's' : ''}</span>
-            <span className="warning-count">{warningCount} warning{warningCount !== 1 ? 's' : ''}</span>
+            <span className="error-count">
+              {errorCount} error{errorCount !== 1 ? 's' : ''}
+            </span>
+            <span className="warning-count">
+              {warningCount} warning{warningCount !== 1 ? 's' : ''}
+            </span>
             <span className="info-count">{infoCount} info</span>
           </div>
         </div>

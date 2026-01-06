@@ -54,6 +54,8 @@ export function extractGroqString(node: TSESTree.TaggedTemplateExpression): stri
  * Get the source location for reporting errors.
  * Returns the location of the template literal content, not the tag.
  */
-export function getTemplateLocation(node: TSESTree.TaggedTemplateExpression): TSESTree.SourceLocation {
+export function getTemplateLocation(
+  node: TSESTree.TaggedTemplateExpression
+): TSESTree.SourceLocation {
   return node.quasi.loc
 }

@@ -2,7 +2,7 @@
 
 import { readFileSync } from 'node:fs'
 import { lint } from './linter'
-import { formatFindings, formatFindingsJson, summarizeFindings } from '@sanity/lint-core'
+import { formatFindings, summarizeFindings } from '@sanity/lint-core'
 
 interface CliOptions {
   format: 'pretty' | 'json'
@@ -74,7 +74,7 @@ async function readStdin(): Promise<string> {
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2))
 
-  let queries: { source: string; query: string }[] = []
+  const queries: { source: string; query: string }[] = []
 
   // Get queries from various sources
   if (options.query) {
@@ -107,7 +107,11 @@ async function main(): Promise<void> {
   }
 
   // Lint all queries
-  const allFindings: { source: string; query: string; findings: ReturnType<typeof lint>['findings'] }[] = []
+  const allFindings: {
+    source: string
+    query: string
+    findings: ReturnType<typeof lint>['findings']
+  }[] = []
   let hasErrors = false
 
   for (const { source, query } of queries) {

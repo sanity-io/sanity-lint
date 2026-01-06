@@ -44,7 +44,8 @@ export const countInCorrelatedSubquery: Rule = {
         if (arg.type === 'Filter') {
           if (containsParentRef(arg as ExprNode)) {
             context.report({
-              message: 'count() on correlated subquery does not execute as an efficient aggregation.',
+              message:
+                'count() on correlated subquery does not execute as an efficient aggregation.',
               severity: 'info',
               help: 'This pattern may be slow on large datasets. Consider restructuring the query.',
             })

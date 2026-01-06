@@ -18,7 +18,7 @@ const QUERIES = {
 }
 
 // Inline query in function - should also be linted
-async function getAuthorPosts(authorSlug: string) {
+async function getAuthorPosts(_authorSlug: string) {
   // ❌ This has a join in filter
   const query = groq`
     *[_type == "post" && author->slug.current == $slug]{
@@ -31,7 +31,7 @@ async function getAuthorPosts(authorSlug: string) {
 }
 
 // Template literal without groq tag - should NOT be linted
-const notGroq = `*[_type == "post" && author->name == "test"]`
+const _notGroq = `*[_type == "post" && author->name == "test"]`
 
 // React component that uses queries
 export function PostList() {

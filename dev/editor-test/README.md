@@ -5,11 +5,13 @@ Test files for validating GROQ linting in VS Code, Cursor, and other editors.
 ## Setup
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Open this folder in VS Code/Cursor:
+
    ```bash
    code dev/editor-test
    # or

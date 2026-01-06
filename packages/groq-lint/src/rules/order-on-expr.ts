@@ -38,7 +38,9 @@ function isAllowedWrappedAttribute(node: ExprNode): boolean {
   if (name === 'distance' && namespace === 'geo' && args.length === 2) {
     const arg0 = args[0]
     const arg1 = args[1]
-    return arg0 !== undefined && arg1 !== undefined && isSimpleAttribute(arg0) && arg1.type === 'Value'
+    return (
+      arg0 !== undefined && arg1 !== undefined && isSimpleAttribute(arg0) && arg1.type === 'Value'
+    )
   }
 
   return false
