@@ -34,6 +34,31 @@ header p {
   color: #888;
 }
 
+.schema-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: #888;
+  cursor: pointer;
+}
+
+.schema-toggle input {
+  accent-color: #4caf50;
+}
+
+.schema-badge {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border-radius: 3px;
+}
+
 .main {
   display: flex;
   flex: 1;
@@ -55,6 +80,9 @@ header p {
 }
 
 .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 0.75rem 1rem;
   font-size: 0.75rem;
   font-weight: 600;
@@ -63,6 +91,29 @@ header p {
   color: #888;
   background: #2d2d2d;
   border-bottom: 1px solid #3c3c3c;
+}
+
+.format-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #0e639c;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.format-btn:hover:not(:disabled) {
+  background: #1177bb;
+}
+
+.format-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 textarea {

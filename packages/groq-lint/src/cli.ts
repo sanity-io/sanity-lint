@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
+import { glob } from 'node:fs/promises'
 import { lint } from './linter'
 import { formatFindings, summarizeFindings } from '@sanity/lint-core'
+import type { SchemaType } from 'groq-js'
 
 interface CliOptions {
   format: 'pretty' | 'json'
   query?: string
+  schema?: string
   files: string[]
 }
 
@@ -26,6 +29,11 @@ function parseArgs(args: string[]): CliOptions {
       const nextArg = args[++i]
       if (nextArg) {
         options.query = nextArg
+      }
+    } else if (arg === '--schema' || arg === '-s') {
+      const nextArg = args[++i]
+      if (nextArg) {
+        options.schema = nextArg
       }
     } else if (arg === '--help' || arg === '-h') {
       printHelp()
@@ -51,16 +59,58 @@ USAGE:
   cat query.groq | groq-lint
 
 OPTIONS:
-  -q, --query <QUERY>   Lint a query string directly
-  -j, --json            Output findings as JSON
-  -h, --help            Show this help message
-  -v, --version         Show version
+  -q, --query <QUERY>     Lint a query string directly
+  -s, --schema <PATH>     Path to schema.json for schema-aware rules
+  -j, --json              Output findings as JSON
+  -h, --help              Show this help message
+  -v, --version           Show version
+
+SCHEMA-AWARE RULES:
+  When a schema is provided (--schema), additional rules are enabled:
+  - invalid-type-filter: Catches typos in _type == "value"
+  - unknown-field: Catches unknown fields in projections
+
+  Generate schema.json with: npx sanity schema extract --path schema.json
 
 EXAMPLES:
   groq-lint query.groq
   groq-lint -q '*[author->name == "Bob"]'
+  groq-lint --schema schema.json 'src/**/*.ts'
   groq-lint --json queries/*.groq
 `)
+}
+
+function loadSchema(path: string): SchemaType | undefined {
+  try {
+    if (!existsSync(path)) {
+      console.error(`Schema file not found: ${path}`)
+      process.exit(1)
+    }
+    const content = readFileSync(path, 'utf-8')
+    return JSON.parse(content) as SchemaType
+  } catch (e) {
+    console.error(`Error loading schema: ${e instanceof Error ? e.message : e}`)
+    process.exit(1)
+  }
+}
+
+/**
+ * Extract GROQ queries from a TypeScript/JavaScript file
+ * Looks for groq`...` tagged template literals
+ */
+function extractQueriesFromSource(content: string): string[] {
+  const queries: string[] = []
+
+  // Match groq`...` template literals (simple regex, handles most cases)
+  const groqTagRegex = /groq\s*`([^`]*)`/g
+  let match
+  while ((match = groqTagRegex.exec(content)) !== null) {
+    if (match[1]) {
+      queries.push(match[1])
+    }
+  }
+
+  return queries
 }
 
 async function readStdin(): Promise<string> {
@@ -71,8 +121,41 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf-8')
 }
 
+/**
+ * Expand glob patterns into file paths
+ */
+async function expandGlobs(patterns: string[]): Promise<string[]> {
+  const files: string[] = []
+
+  for (const pattern of patterns) {
+    // Check if it's a glob pattern
+    if (pattern.includes('*')) {
+      try {
+        for await (const file of glob(pattern)) {
+          files.push(file)
+        }
+      } catch {
+        // If glob fails, try as literal path
+        if (existsSync(pattern)) {
+          files.push(pattern)
+        }
+      }
+    } else if (existsSync(pattern)) {
+      files.push(pattern)
+    }
+  }
+
+  return files
+}
+
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2))
+
+  // Load schema if provided
+  const schema = options.schema ? loadSchema(options.schema) : undefined
+  if (options.schema && schema) {
+    console.log(`Using schema: ${options.schema}\n`)
+  }
 
   const queries: { source: string; query: string }[] = []
 
@@ -82,10 +165,30 @@ async function main(): Promise<void> {
   }
 
   if (options.files.length > 0) {
-    for (const file of options.files) {
+    const expandedFiles = await expandGlobs(options.files)
+
+    for (const file of expandedFiles) {
       try {
         const content = readFileSync(file, 'utf-8')
-        queries.push({ source: file, query: content })
+
+        // Check if it's a TS/JS file - extract GROQ from template literals
+        if (
+          file.endsWith('.ts') ||
+          file.endsWith('.tsx') ||
+          file.endsWith('.js') ||
+          file.endsWith('.jsx')
+        ) {
+          const extracted = extractQueriesFromSource(content)
+          for (let i = 0; i < extracted.length; i++) {
+            const q = extracted[i]
+            if (q) {
+              queries.push({ source: `${file}:query${i + 1}`, query: q })
+            }
+          }
+        } else {
+          // Treat as raw GROQ file
+          queries.push({ source: file, query: content })
+        }
       } catch {
         console.error(`Error reading file: ${file}`)
         process.exit(1)
@@ -115,7 +218,7 @@ async function main(): Promise<void> {
   let hasErrors = false
 
   for (const { source, query } of queries) {
-    const result = lint(query)
+    const result = lint(query, schema ? { schema } : undefined)
 
     if (result.parseError) {
       console.error(`Parse error in ${source}: ${result.parseError}`)
@@ -153,6 +256,8 @@ async function main(): Promise<void> {
       console.log(
         `\nFound ${summary.total} issue(s): ${summary.errors} error(s), ${summary.warnings} warning(s), ${summary.infos} info(s)`
       )
+    } else if (queries.length > 0) {
+      console.log(`Checked ${queries.length} query(ies) - no issues found`)
     }
   }
 

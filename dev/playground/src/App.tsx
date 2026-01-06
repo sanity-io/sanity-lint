@@ -1,8 +1,58 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { lint } from '@sanity/groq-lint'
 import type { Finding } from '@sanity/lint-core'
+import type { SchemaType } from 'groq-js'
+import * as prettier from 'prettier/standalone'
+import * as groqPlugin from 'prettier-plugin-groq'
+
+/**
+ * Sample schema for testing schema-aware rules
+ */
+const SAMPLE_SCHEMA: SchemaType = [
+  {
+    type: 'document',
+    name: 'post',
+    attributes: {
+      _id: { type: 'objectAttribute', value: { type: 'string' } },
+      _type: { type: 'objectAttribute', value: { type: 'string', value: 'post' } },
+      title: { type: 'objectAttribute', value: { type: 'string' } },
+      slug: { type: 'objectAttribute', value: { type: 'string' } },
+      body: { type: 'objectAttribute', value: { type: 'string' } },
+      publishedAt: { type: 'objectAttribute', value: { type: 'string' } },
+      author: { type: 'objectAttribute', value: { type: 'string' } },
+    },
+  },
+  {
+    type: 'document',
+    name: 'author',
+    attributes: {
+      _id: { type: 'objectAttribute', value: { type: 'string' } },
+      _type: { type: 'objectAttribute', value: { type: 'string', value: 'author' } },
+      name: { type: 'objectAttribute', value: { type: 'string' } },
+      bio: { type: 'objectAttribute', value: { type: 'string' } },
+      email: { type: 'objectAttribute', value: { type: 'string' } },
+    },
+  },
+  {
+    type: 'document',
+    name: 'category',
+    attributes: {
+      _id: { type: 'objectAttribute', value: { type: 'string' } },
+      _type: { type: 'objectAttribute', value: { type: 'string', value: 'category' } },
+      title: { type: 'objectAttribute', value: { type: 'string' } },
+      description: { type: 'objectAttribute', value: { type: 'string' } },
+    },
+  },
+]
 
 const EXAMPLES: Record<string, string> = {
+  // Formatting example
+  'Needs formatting': `*[_type=="post"&&published==true]{title,body,"author":author->{name,bio},categories[]->{title,slug},_createdAt,_updatedAt}|order(_createdAt desc)[0...10]`,
+  // Schema-aware rules
+  'Invalid type (typo)': `*[_type == "psot"]{ title }`,
+  'Unknown field (typo)': `*[_type == "post"]{ titel, body }`,
+  'Wrong type field': `*[_type == "post"]{ bio }`,
+  // Performance rules
   'Join in filter': `*[_type == "post" && author->name == "John"]`,
   'Deep pagination': `*[_type == "post"][5000...5100]`,
   'Large page': `*[_type == "post"][0...500]`,
@@ -42,11 +92,13 @@ const EXAMPLES: Record<string, string> = {
 }
 
 export function App() {
-  const [query, setQuery] = useState(EXAMPLES['Join in filter'])
+  const [query, setQuery] = useState(EXAMPLES['Needs formatting'])
+  const [useSchema, setUseSchema] = useState(true)
+  const [isFormatting, setIsFormatting] = useState(false)
 
   const results = useMemo(() => {
     try {
-      return lint(query)
+      return lint(query, useSchema ? { schema: SAMPLE_SCHEMA } : undefined)
     } catch (e) {
       return {
         findings: [
@@ -61,6 +113,22 @@ export function App() {
         info: 0,
       }
     }
+  }, [query, useSchema])
+
+  const handleFormat = useCallback(async () => {
+    setIsFormatting(true)
+    try {
+      const formatted = await prettier.format(query, {
+        parser: 'groq',
+        plugins: [groqPlugin],
+        printWidth: 80,
+      })
+      setQuery(formatted.trim())
+    } catch (e) {
+      console.error('Format error:', e)
+    } finally {
+      setIsFormatting(false)
+    }
   }, [query])
 
   const errorCount = results.findings.filter((f) => f.severity === 'error').length
@@ -72,11 +140,30 @@ export function App() {
       <header>
         <h1>GROQ Lint Playground</h1>
         <p>Test GROQ queries against lint rules in real-time</p>
+        <label className="schema-toggle">
+          <input
+            type="checkbox"
+            checked={useSchema}
+            onChange={(e) => setUseSchema(e.target.checked)}
+          />
+          <span>Enable schema-aware rules</span>
+          {useSchema && <span className="schema-badge">Schema loaded</span>}
+        </label>
       </header>
 
       <div className="main">
         <div className="editor-panel">
-          <div className="panel-header">Query</div>
+          <div className="panel-header">
+            <span>Query</span>
+            <button
+              className="format-btn"
+              onClick={handleFormat}
+              disabled={isFormatting}
+              title="Format query (Prettier)"
+            >
+              {isFormatting ? 'Formatting...' : 'Format'}
+            </button>
+          </div>
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}

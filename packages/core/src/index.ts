@@ -4,12 +4,16 @@ export type {
   Category,
   SourceLocation,
   SourceSpan,
+  Suggestion,
   Finding,
   RuleContext,
   Rule,
   RuleConfig,
   LinterConfig,
 } from './types'
+
+// Re-export SchemaType from groq-js for convenience
+export type { SchemaType } from 'groq-js'
 
 // Reporting utilities
 export { formatFindings, formatFindingsJson, summarizeFindings } from './reporter'

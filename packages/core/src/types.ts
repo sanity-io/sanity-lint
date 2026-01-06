@@ -1,4 +1,4 @@
-import type { ExprNode } from 'groq-js'
+import type { ExprNode, SchemaType } from 'groq-js'
 
 /**
  * Severity levels for lint findings
@@ -31,6 +31,16 @@ export interface SourceSpan {
 }
 
 /**
+ * A suggested fix for a finding
+ */
+export interface Suggestion {
+  /** Description of what the suggestion does */
+  description: string
+  /** The replacement text */
+  replacement: string
+}
+
+/**
  * A lint finding/diagnostic
  */
 export interface Finding {
@@ -44,6 +54,8 @@ export interface Finding {
   span?: SourceSpan
   /** Additional help text */
   help?: string
+  /** Suggested fixes */
+  suggestions?: Suggestion[]
 }
 
 /**
@@ -56,6 +68,8 @@ export interface RuleContext {
   queryLength: number
   /** Report a finding */
   report: (finding: Omit<Finding, 'ruleId'>) => void
+  /** Schema for schema-aware rules (optional) */
+  schema?: SchemaType
 }
 
 /**
@@ -74,6 +88,8 @@ export interface Rule {
   category: Category
   /** Rule IDs that this rule supersedes */
   supersedes?: string[]
+  /** Whether this rule requires a schema to function */
+  requiresSchema?: boolean
 
   /**
    * Check the AST for violations

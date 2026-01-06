@@ -4,6 +4,7 @@ import { countInCorrelatedSubquery } from './count-in-correlated-subquery'
 import { deepPagination } from './deep-pagination'
 import { deepPaginationParam } from './deep-pagination-param'
 import { extremelyLargeQuery } from './extremely-large-query'
+import { invalidTypeFilter } from './invalid-type-filter'
 import { joinInFilter } from './join-in-filter'
 import { joinToGetId } from './join-to-get-id'
 import { largePages } from './large-pages'
@@ -12,6 +13,7 @@ import { matchOnId } from './match-on-id'
 import { nonLiteralComparison } from './non-literal-comparison'
 import { orderOnExpr } from './order-on-expr'
 import { repeatedDereference } from './repeated-dereference'
+import { unknownField } from './unknown-field'
 import { veryLargeQuery } from './very-large-query'
 
 /**
@@ -45,6 +47,10 @@ export const rules: Rule[] = [
 
   // Correctness
   matchOnId,
+
+  // Schema-aware correctness (requires schema to run)
+  invalidTypeFilter,
+  unknownField,
 ]
 
 /**
@@ -61,6 +67,7 @@ export {
   deepPagination,
   deepPaginationParam,
   extremelyLargeQuery,
+  invalidTypeFilter,
   joinInFilter,
   joinToGetId,
   largePages,
@@ -69,5 +76,6 @@ export {
   nonLiteralComparison,
   orderOnExpr,
   repeatedDereference,
+  unknownField,
   veryLargeQuery,
 }

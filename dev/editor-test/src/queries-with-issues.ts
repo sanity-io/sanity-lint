@@ -8,6 +8,35 @@
 
 import { groq } from 'next-sanity' // or wherever groq comes from
 
+// =============================================================================
+// SCHEMA-AWARE RULES (require schema to be loaded)
+// These rules catch typos and invalid field/type references
+// =============================================================================
+
+// ❌ ERROR: Invalid type filter - "psot" doesn't exist, did you mean "post"?
+export const invalidTypeFilter = groq`
+  *[_type == "psot"]
+`
+
+// ⚠️ WARNING: Unknown field - "titel" doesn't exist on "post", did you mean "title"?
+export const unknownFieldTypo = groq`
+  *[_type == "post"]{ titel, body }
+`
+
+// ⚠️ WARNING: Unknown field - "bio" doesn't exist on "post" (but exists on "author")
+export const wrongTypeField = groq`
+  *[_type == "post"]{ title, bio }
+`
+
+// ✅ Valid: All fields exist in schema
+export const validSchemaQuery = groq`
+  *[_type == "post"]{ title, body, slug }
+`
+
+// =============================================================================
+// PERFORMANCE RULES (no schema required)
+// =============================================================================
+
 // ❌ ERROR: Join in filter - prevents optimization
 export const postsWithJoinInFilter = groq`
   *[_type == "post" && author->name == "John"]

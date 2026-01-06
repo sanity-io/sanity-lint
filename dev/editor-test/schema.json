@@ -1,0 +1,36 @@
+[
+  {
+    "type": "document",
+    "name": "post",
+    "attributes": {
+      "_id": { "type": "objectAttribute", "value": { "type": "string" } },
+      "_type": { "type": "objectAttribute", "value": { "type": "string", "value": "post" } },
+      "title": { "type": "objectAttribute", "value": { "type": "string" } },
+      "slug": { "type": "objectAttribute", "value": { "type": "string" } },
+      "body": { "type": "objectAttribute", "value": { "type": "string" } },
+      "publishedAt": { "type": "objectAttribute", "value": { "type": "string" } },
+      "author": { "type": "objectAttribute", "value": { "type": "string" } }
+    }
+  },
+  {
+    "type": "document",
+    "name": "author",
+    "attributes": {
+      "_id": { "type": "objectAttribute", "value": { "type": "string" } },
+      "_type": { "type": "objectAttribute", "value": { "type": "string", "value": "author" } },
+      "name": { "type": "objectAttribute", "value": { "type": "string" } },
+      "bio": { "type": "objectAttribute", "value": { "type": "string" } },
+      "email": { "type": "objectAttribute", "value": { "type": "string" } }
+    }
+  },
+  {
+    "type": "document",
+    "name": "category",
+    "attributes": {
+      "_id": { "type": "objectAttribute", "value": { "type": "string" } },
+      "_type": { "type": "objectAttribute", "value": { "type": "string", "value": "category" } },
+      "title": { "type": "objectAttribute", "value": { "type": "string" } },
+      "description": { "type": "objectAttribute", "value": { "type": "string" } }
+    }
+  }
+]

@@ -1,4 +1,4 @@
-import { parse } from 'groq-js'
+import { parse, type SchemaType } from 'groq-js'
 import type { Finding, Rule, RuleContext, LinterConfig } from '@sanity/lint-core'
 import { rules as allRules } from './rules'
 
@@ -15,13 +15,24 @@ export interface LintResult {
 }
 
 /**
+ * Options for linting
+ */
+export interface LintOptions {
+  /** Linter configuration */
+  config?: LinterConfig
+  /** Schema for schema-aware rules */
+  schema?: SchemaType
+}
+
+/**
  * Lint a GROQ query
  *
  * @param query - The GROQ query string to lint
- * @param config - Optional configuration
+ * @param options - Optional configuration and schema
  * @returns Lint result with findings
  */
-export function lint(query: string, config?: LinterConfig): LintResult {
+export function lint(query: string, options?: LintOptions): LintResult {
+  const { config, schema } = options ?? {}
   const findings: Finding[] = []
 
   // Handle empty query
@@ -41,8 +52,8 @@ export function lint(query: string, config?: LinterConfig): LintResult {
     }
   }
 
-  // Get enabled rules
-  const enabledRules = getEnabledRules(config)
+  // Get enabled rules, filtering out schema-requiring rules if no schema provided
+  const enabledRules = getEnabledRules(config, schema)
 
   // Track which rules have fired (for supersedes logic)
   const firedRules = new Set<string>()
@@ -55,6 +66,7 @@ export function lint(query: string, config?: LinterConfig): LintResult {
     const context: RuleContext = {
       query,
       queryLength: query.length,
+      ...(schema && { schema }),
       report: (finding) => {
         ruleFindings.push({
           ...finding,
@@ -94,12 +106,19 @@ export function lint(query: string, config?: LinterConfig): LintResult {
 /**
  * Get enabled rules based on configuration
  */
-function getEnabledRules(config?: LinterConfig): Rule[] {
-  if (!config?.rules) {
-    return allRules
+function getEnabledRules(config?: LinterConfig, schema?: SchemaType): Rule[] {
+  let rules = allRules
+
+  // Filter out schema-requiring rules if no schema is provided
+  if (!schema) {
+    rules = rules.filter((rule) => !rule.requiresSchema)
   }
 
-  return allRules.filter((rule) => {
+  if (!config?.rules) {
+    return rules
+  }
+
+  return rules.filter((rule) => {
     const ruleConfig = config.rules?.[rule.id]
     if (ruleConfig === false) {
       return false
@@ -115,9 +134,9 @@ function getEnabledRules(config?: LinterConfig): Rule[] {
  * Lint multiple queries
  *
  * @param queries - Array of queries to lint
- * @param config - Optional configuration
+ * @param options - Optional configuration and schema
  * @returns Array of lint results
  */
-export function lintMany(queries: string[], config?: LinterConfig): LintResult[] {
-  return queries.map((query) => lint(query, config))
+export function lintMany(queries: string[], options?: LintOptions): LintResult[] {
+  return queries.map((query) => lint(query, options))
 }
