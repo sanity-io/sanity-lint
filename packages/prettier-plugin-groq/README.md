@@ -31,9 +31,26 @@ Configure in `.prettierrc`:
 
 ### Formatting Embedded GROQ in JavaScript/TypeScript
 
-> **Note**: Embedded GROQ formatting in JavaScript/TypeScript template literals (like `groq\`...\``) is planned for a future release. For now, use this plugin to format standalone `.groq` files.
+To format GROQ queries embedded in JavaScript/TypeScript files, add the embed plugin:
 
-For embedded GROQ queries, you can use the ESLint plugin (`eslint-plugin-sanity`) to lint GROQ inside template literals.
+```json
+{
+  "plugins": ["prettier-plugin-groq", "prettier-plugin-groq/embed"]
+}
+```
+
+This formats GROQ in:
+
+- **Tagged template literals**: `groq`...``, `defineQuery`...``
+- **Function calls**: `defineQuery("...")`, `defineQuery(`...`)`
+
+```typescript
+// Before formatting
+const query = groq`*[_type=="post"]{title,body,"author":author->name}`
+
+// After formatting
+const query = groq`*[_type == "post"] { title, body, "author": author->name }`
+```
 
 ## Examples
 
