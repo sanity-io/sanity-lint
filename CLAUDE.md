@@ -1,0 +1,149 @@
+# @sanity/dev-tools
+
+Sanity Developer Experience Suite - linting, formatting, and static analysis for Sanity projects.
+
+## Architecture
+
+### Monorepo Structure
+- **Package manager**: pnpm workspaces
+- **Build orchestration**: Turborepo
+- **Testing**: Vitest with custom RuleTester pattern
+- **Bundling**: tsup (ESM + CJS dual output)
+- **Versioning**: Changesets
+
+### Packages
+
+| Package | npm Name | Purpose |
+|---------|----------|---------|
+| `packages/core` | `@sanity/lint-core` | Shared types, RuleTester, reporters |
+| `packages/groq-lint` | `@sanity/groq-lint` | GROQ query linting rules |
+| `packages/eslint-plugin` | `eslint-plugin-sanity` | ESLint integration |
+
+### Dependency Graph
+```
+@sanity/lint-core
+       ↓
+@sanity/groq-lint  →  eslint-plugin-sanity
+```
+
+## Development
+
+### Commands
+```bash
+pnpm install          # Install dependencies
+pnpm build            # Build all packages
+pnpm test             # Run all tests
+pnpm test:watch       # Watch mode
+pnpm lint             # Lint codebase
+pnpm typecheck        # Type check
+```
+
+### Adding a New Rule
+
+1. Create rule file: `packages/groq-lint/src/rules/{rule-name}.ts`
+2. Create test file: `packages/groq-lint/src/rules/__tests__/{rule-name}.test.ts`
+3. Export from `packages/groq-lint/src/rules/index.ts`
+4. Add to default ruleset in `packages/groq-lint/src/index.ts`
+
+Use `/add-rule` skill to scaffold automatically.
+
+## Conventions
+
+### Rule Implementation
+
+Every rule must:
+- Have a unique `id` matching the filename (kebab-case)
+- Have `name`, `description`, `severity`
+- Implement the `check(ast)` method
+- Have 100% test coverage
+- Match behavior of Rust groq-lint (if porting)
+
+```typescript
+// packages/groq-lint/src/rules/join-in-filter.ts
+import type { Rule } from '@sanity/lint-core'
+
+export const joinInFilter: Rule = {
+  id: 'join-in-filter',
+  name: 'Join in Filter',
+  description: 'Avoid `->` inside filters. It prevents optimization.',
+  severity: 'error',
+
+  check(ast, context) {
+    // Implementation
+  }
+}
+```
+
+### Test Structure
+
+Use the RuleTester pattern with `valid` and `invalid` cases:
+
+```typescript
+// packages/groq-lint/src/rules/__tests__/join-in-filter.test.ts
+import { RuleTester } from '@sanity/lint-core'
+import { joinInFilter } from '../join-in-filter'
+
+const tester = new RuleTester()
+
+tester.run('join-in-filter', joinInFilter, {
+  valid: [
+    '*[_type == "post"]',
+    '*[_type == "post"]{ author-> }',  // projection OK
+  ],
+  invalid: [
+    {
+      code: '*[author->name == "Bob"]',
+      errors: [{ ruleId: 'join-in-filter' }]
+    }
+  ]
+})
+```
+
+### Commit Messages
+
+Follow Conventional Commits:
+```
+feat(groq-lint): add join-in-filter rule
+fix(core): handle empty query input
+test(groq-lint): add edge cases for deep-pagination
+docs: update README with usage examples
+```
+
+## Key References
+
+### Rule Specifications
+See `.claude/reference/rules.yaml` for the canonical rule definitions from Rust groq-lint.
+
+### GROQ AST Types
+The `groq-js` package exports AST types:
+- `ExprNode` - Base expression node
+- `FilterNode` - `*[constraint]`
+- `ProjectionNode` - `{ field1, field2 }`
+- `DerefNode` - `->` dereference
+- See `.claude/reference/groq-ast-types.md` for full reference
+
+### External Resources
+- [groq-lint (Rust)](https://github.com/sanity-io/groq-lint) - Reference implementation
+- [groq-js](https://github.com/sanity-io/groq-js) - GROQ parser we use
+- [groq-test-suite](https://github.com/sanity-io/groq-test-suite) - Test corpus
+- [ESLint RuleTester](https://eslint.org/docs/latest/integrate/nodejs-api#ruletester) - Testing pattern
+
+## Quality Standards
+
+### Test Coverage
+- Rules: 100% coverage required
+- Core utilities: 90%+ coverage
+- Integration tests for ESLint plugin
+
+### CI Checks
+All PRs must pass:
+- [ ] Type check (`pnpm typecheck`)
+- [ ] Lint (`pnpm lint`)
+- [ ] Tests (`pnpm test`)
+- [ ] Build (`pnpm build`)
+
+### Rust Parity
+When porting rules from groq-lint:
+- Must produce identical findings for the same query
+- Run `pnpm test:rust-parity` to verify
+- Document any intentional differences

@@ -1,0 +1,152 @@
+name: basic-rules
+version: 1.0
+
+# === Documentation ===
+#
+# Each rule has a unique ID, a pattern, an advice, a category, and a severity:
+#
+# * The pattern is an English description of the GROQ construct being matched.
+# * The advice is a short explanation of the problem and how to fix it.
+#
+# The context determines when the rule is applied:
+# * "expr" (default) means the rule is applied to each expression in the query.
+# * "whole_query" means the rule is only applied once, to the entire query.
+#
+# A rule can have `supercedes`, a list of other rule IDs which this rule replaces.
+# If the rule matches, any findings from the superceded rules are unnecessary.
+
+rules:
+  - id: join_in_filter
+    pattern: |
+      Any dereference operator (->) occurring within the constraint expression of a filter ([ ]).
+    advice: |
+      Avoid joins (`->`) inside filters. It prevents optimization.
+      `a->b == "c"` can be more optimally written `count(*[_id == ^.a._ref && b == "c"]) == 1`.
+    category: performance
+    severity: high
+
+  - id: join_to_get_id
+    pattern: |
+      Using a dereference operator (->) to retrieve the _id of a document.
+    advice: |
+      Avoid using a dereference operator (`->`) to retrieve the `_id` of a document.
+      `a->b._id` can be more optimally written as `a._ref`.
+    category: performance
+    severity: medium
+
+  - id: computed_value_in_filter
+    pattern: |
+      Binary operators like '+', '-', '*', '/' occurring within the constraint expression of a filter ([ ]),
+      EXCEPT when one side references a parent scope (^), which enables efficient correlated subquery execution.
+    advice: |
+      Avoid computed values (concatenation, arithmetic, etc.) in filters. Indices cannot be used.
+      Consider adding additional filters to reduce the search space.
+    category: performance
+    severity: high
+
+  - id: match_on_id
+    pattern: |
+      `_id match "<string containing wildcards>"`
+    advice: |
+      `match` is intended for full-text matching and may not work as expected on `_id`.
+    category: correctness
+    severity: low
+
+  - id: order_on_expr
+    pattern: |
+      order() where one or more argument is not:
+      * `<attribute> [asc|desc]` (plain attribute)
+      * `lower(<attribute>) [asc|desc]` (lowercasing)
+      * `dateTime(<attribute>) [asc|desc]` (coerce to datetime)
+      * `geo::distance(<attribute>, <constant>)` [asc|desc] (geo distance)
+    advice: |
+      Avoid ordering on computed values. Indices cannot be used to sort, which means the entire
+      result set must be materialized before sorting.
+    category: performance
+    severity: high
+
+  - id: deep_pagination
+    pattern: |
+      Range or slice expressions where the start index is either a literal integer >= 1000, or a $param.
+    advice: |
+      Deep pagination is slow. Consider using cursor-based pagination (e.g., using `_id`).
+    category: performance
+    severity: medium
+
+  - id: deep_pagination_param
+    pattern: |
+      Range or slice expressions where the start index is a $param.
+    advice: |
+      If given a large value, this can cause deep pagination, which is slow.
+      Consider using cursor-based pagination (e.g., using `_id`).
+    category: performance
+    severity: medium
+
+  - id: large_pages
+    pattern: |
+      Range or slice expressions where the start index is zero and the end index is a literal integer greater than 100.
+    advice: |
+      Fetching many results at once can be slow. Consider breaking into smaller,
+      discrete batches and/or cursor-based pagination (e.g., using `_id`).
+    category: performance
+    severity: medium
+
+  - id: non_literal_comparison
+    pattern: |
+      Comparison operators (==, !=, <, >, <=, >=) where both the left-hand and right-hand sides
+        are non-literal expressions (e.g., attributes, function calls, concatenation, etc.):
+      - Literal expressions that only involve literals (e.g. 2+1 or "foo" + "bar") are considered
+        literals.
+      - now() is considered a literal.
+      - Params (e.g. foo) are considered literals.
+      - Referring to a parent-scope attribute (e.g., `foo == ^.bar`) on either left or right side is fine
+        and not covered by this rule.
+    advice: |
+      Comparisons between two non-literal fields cannot be executed in an efficient manner.
+      Consider adding additional filters to reduce the search space.
+    category: performance
+    severity: high
+
+  - id: repeated_dereference
+    pattern: |
+      Multiple dereference operations (->) on the same attribute within a single object projection.
+    advice: |
+      Repeatedly resolving the same reference is inefficient. Consider a single sub-projection.
+    category: performance
+    severity: low
+
+  - id: count_in_correlated_subquery
+    pattern: |
+      count() function calls on a correlated subquery, e.g. `count(*[_id == ^._id])`.
+    advice: |
+      Using count() on a correlated subquery does not execute as an efficient aggregation, and can be slow.
+    category: performance
+    severity: low
+
+  - id: very_large_query
+    pattern: |
+      The raw GROQ query is larger than 10KB.
+    advice: |
+      This query is very large, and may execute very slowly; it may be deprioritized by the server.
+    context: whole_query
+    category: performance
+    severity: high
+
+  - id: extremely_large_query
+    pattern: |
+      The raw GROQ query is larger than 100KB.
+    advice: |
+      This query is extremely large, and may execute very slowly; it may be deprioritized by the server.
+    context: whole_query
+    category: performance
+    severity: high
+    supercedes: [very_large_query]
+
+  - id: many_joins
+    pattern: |
+      The query uses more than 10 dereference operators (->).
+    advice: |
+      This query uses many joins, and may have poor performance as a result.
+    context: whole_query
+    category: performance
+    severity: medium
