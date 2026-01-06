@@ -14,24 +14,36 @@ Sanity Developer Experience Suite - linting, formatting, and static analysis for
 
 ### Packages
 
-| Package                         | npm Name               | Purpose                             |
-| ------------------------------- | ---------------------- | ----------------------------------- |
-| `packages/core`                 | `@sanity/lint-core`    | Shared types, RuleTester, reporters |
-| `packages/groq-lint`            | `@sanity/groq-lint`    | GROQ query linting rules + CLI      |
-| `packages/schema-lint`          | `@sanity/schema-lint`  | Sanity schema linting rules         |
-| `packages/groq-lsp`             | `@sanity/groq-lsp`     | Language Server Protocol for GROQ   |
-| `packages/eslint-plugin`        | `eslint-plugin-sanity` | ESLint integration                  |
-| `packages/vscode-groq`          | `vscode-groq`          | VS Code/Cursor extension            |
-| `packages/prettier-plugin-groq` | `prettier-plugin-groq` | Prettier plugin for GROQ formatting |
+| Package                         | npm Name               | Purpose                                      |
+| ------------------------------- | ---------------------- | -------------------------------------------- |
+| `packages/core`                 | `@sanity/lint-core`    | Shared types, RuleTester, reporters          |
+| `packages/groq-wasm`            | `@sanity/groq-wasm`    | WASM bindings for Rust groq-lint/groq-format |
+| `packages/groq-lint`            | `@sanity/groq-lint`    | GROQ query linting rules + CLI               |
+| `packages/schema-lint`          | `@sanity/schema-lint`  | Sanity schema linting rules                  |
+| `packages/groq-lsp`             | `@sanity/groq-lsp`     | Language Server Protocol for GROQ            |
+| `packages/eslint-plugin`        | `eslint-plugin-sanity` | ESLint integration                           |
+| `packages/vscode-groq`          | `vscode-groq`          | VS Code/Cursor extension                     |
+| `packages/prettier-plugin-groq` | `prettier-plugin-groq` | Prettier plugin for GROQ formatting          |
 
 ### Dependency Graph
 
 ```
-@sanity/lint-core
-       ↓
-@sanity/groq-lint  →  eslint-plugin-sanity
-       ↓
-@sanity/groq-lsp   →  vscode-groq
+              Rust (upstream)
+    ┌─────────────┴─────────────┐
+    │                           │
+groq-lint (Rust)        groq-format (Rust)
+    └─────────────┬─────────────┘
+                  │ WASM
+                  ▼
+         @sanity/groq-wasm
+                  │
+    ┌─────────────┼─────────────┐
+    ▼             ▼             ▼
+@sanity/      eslint-plugin  (future)
+groq-lint       -sanity      oxlint-plugin
+    │
+    ▼
+@sanity/groq-lsp → vscode-groq
 ```
 
 ## Development
@@ -207,10 +219,13 @@ The `groq-js` package exports AST types:
 
 ### External Resources
 
-- [groq-lint (Rust)](https://github.com/sanity-io/groq-lint) - Reference implementation
-- [groq-js](https://github.com/sanity-io/groq-js) - GROQ parser we use
+- [groq-lint (Rust)](https://github.com/atombender/groq-lint) - Rust linter (WASM source)
+- [groq-format (Rust)](https://github.com/atombender/groq-format) - Rust formatter (WASM source)
+- [groq-parser-rs](https://github.com/sanity-io/groq-parser-rs) - Rust GROQ parser
+- [groq-js](https://github.com/sanity-io/groq-js) - JS GROQ parser (for schema-aware rules)
 - [groq-test-suite](https://github.com/sanity-io/groq-test-suite) - Test corpus
 - [ESLint RuleTester](https://eslint.org/docs/latest/integrate/nodejs-api#ruletester) - Testing pattern
+- [OxLint JS Plugins](https://oxc.rs/blog/2025-10-09-oxlint-js-plugins.html) - OxLint plugin system
 
 ## Quality Standards
 

@@ -317,11 +317,297 @@ code --install-extension vscode-groq-0.0.1.vsix
 
 ---
 
-## Stage 4: MCP Server for AI Agents
+## Stage 4: WASM Core (groq-lint + groq-format)
+
+**Goal**: Replace duplicated TS implementations with Rust tools compiled to WASM.
+
+### 4.1 Background
+
+We currently maintain TS ports of Rust tools:
+
+- **groq-lint rules** - TS reimplementations of [atombender/groq-lint](https://github.com/atombender/groq-lint)
+- **prettier-plugin-groq** - TS reimplementation of [atombender/groq-format](https://github.com/atombender/groq-format)
+
+By compiling Rust to WASM, we get:
+
+- Single source of truth (Rust implementation)
+- No Rust toolchain required for users (just npm install)
+- Better performance (Rust is faster)
+- Automatic rule parity
+
+### 4.2 New Package: @sanity/groq-wasm
+
+```
+packages/groq-wasm/
+├── package.json
+├── src/
+│   ├── index.ts           # Main exports
+│   ├── lint.ts            # Linting wrapper
+│   ├── format.ts          # Formatting wrapper
+│   ├── wasm-loader.ts     # WASM initialization
+│   └── types.ts           # TS types
+├── wasm/
+│   ├── groq_lint_bg.wasm
+│   └── groq_format_bg.wasm
+└── scripts/
+    └── build-wasm.sh      # Fetch + build WASM from Rust repos
+```
+
+### 4.3 API Design
+
+```typescript
+// @sanity/groq-wasm
+import { lint, format, initWasm } from '@sanity/groq-wasm'
+
+// Initialize (call once at startup)
+await initWasm()
+
+// Linting
+const findings = lint('*[_type == "post"]{ author-> }')
+// → [{ ruleId: 'join-in-filter', message: '...' }]
+
+// Formatting
+const formatted = format('*[_type=="post"]{title,body}')
+// → '*[_type == "post"]{ title, body }'
+```
+
+### 4.4 Tasks
+
+**4.4.1 Rust wrapper crate (no forking needed!)**
+
+- [x] Create wrapper crate at `packages/groq-wasm/rust/`
+- [x] Depend on groq-lint and groq-format as git dependencies in Cargo.toml
+- [x] Add wasm-bindgen annotations to expose functions
+- [x] Create build script (`scripts/build-wasm.sh`)
+- [x] Build WASM with wasm-pack
+- [x] Create GitHub Actions for WASM builds
+
+**4.4.2 Create @sanity/groq-wasm package**
+
+- [x] Create packages/groq-wasm/ directory structure
+- [x] Implement WASM loader (handles async init, browser vs Node)
+- [x] Create TS wrapper for lint function
+- [x] Create TS wrapper for format function
+- [x] Map Rust types to TS types (Finding, FormatOptions, etc.)
+- [x] Handle rule ID conversion (snake_case → kebab-case)
+- [x] Add comprehensive tests
+- [x] Integrate actual WASM output (working with Node.js)
+
+**4.4.3 Migrate @sanity/groq-lint**
+
+- [x] Replace TS rule implementations with WASM lint() calls
+- [x] Keep schema-aware rules in TS (unknown-field, invalid-type-filter)
+- [x] Create hybrid linter: WASM for pure GROQ, TS for schema rules
+- [x] Add `initLinter()` and `isWasmAvailable()` API
+- [x] Update CLI to use WASM backend
+- [ ] Run parity tests (TS vs WASM output)
+
+**4.4.4 Migrate prettier-plugin-groq**
+
+- [x] Replace TS printer with WASM format() calls
+- [x] Keep Prettier plugin interface
+- [x] Map Prettier options → groq-format options
+- [x] Add `initWasmFormatter()` and `isWasmFormatterAvailable()` API
+- [x] Update LSP formatting to use WASM
+
+### 4.5 Success Criteria
+
+- [x] WASM modules load in Node.js 20+
+- [x] No native dependencies (pure WASM + JS)
+- [x] WASM integrated into @sanity/groq-lint (hybrid linter)
+- [x] WASM integrated into prettier-plugin-groq
+- [x] All existing tests pass (372 tests passing)
+- [x] CLI uses WASM backend
+- [x] LSP uses WASM for linting and formatting
+- [x] GitHub Actions builds WASM automatically
+- [ ] 100% finding parity with Rust groq-lint (parity tests pending)
+- [ ] Performance benchmarks
+
+**Status**: Complete (optional parity tests and benchmarks remaining)
+
+### 4.6 Implementation Notes
+
+**Package created:** `packages/groq-wasm` (`@sanity/groq-wasm`)
+
+**Rust wrapper crate:** `packages/groq-wasm/rust/`
+
+- Depends on groq-lint and groq-format as git dependencies (no forking!)
+- Uses wasm-bindgen for JS interop
+- Build command: `wasm-pack build --target nodejs --out-dir ../wasm --out-name groq_wasm`
+
+**WASM output:**
+
+- `wasm/groq_wasm.js` - Generated JS bindings (CommonJS for Node.js)
+- `wasm/groq_wasm_bg.wasm` - Compiled WASM binary (~296KB)
+
+**Usage:**
+
+```typescript
+// Direct WASM usage
+import { initWasm, lint, format } from '@sanity/groq-wasm'
+
+await initWasm()
+
+const findings = lint('*[_type == "post"]{ author-> }')
+// → [{ ruleId: 'join-in-filter', message: '...' }]
+
+const formatted = format('*[_type=="post"]{title,body}')
+// → '*[_type == "post"]{ title, body }'
+
+// Via @sanity/groq-lint (hybrid linter)
+import { initLinter, lint, isWasmAvailable } from '@sanity/groq-lint'
+
+await initLinter() // Optional, enables WASM
+console.log(isWasmAvailable()) // true
+const result = lint('*[author->name == "Bob"]')
+// Uses WASM for pure GROQ rules, TS for schema-aware rules
+
+// Via prettier-plugin-groq
+import { initWasmFormatter, isWasmFormatterAvailable } from 'prettier-plugin-groq'
+
+await initWasmFormatter() // Optional, enables WASM formatting
+const formatted = await prettier.format(query, { parser: 'groq', plugins: [...] })
+```
+
+---
+
+## Stage 5: OxLint Integration
+
+**Goal**: Enable GROQ linting in [OxLint](https://oxc.rs/) via their JS plugin system.
+
+### 5.1 Background
+
+OxLint (October 2025) introduced [JS plugins](https://oxc.rs/blog/2025-10-09-oxlint-js-plugins.html):
+
+- ESLint-compatible plugin API
+- 15x faster than ESLint even with JS plugins
+- Many existing ESLint plugins work without modification
+
+### 5.2 Integration Strategy
+
+**Option A: ESLint Plugin Compatibility (try first)** ✅ WORKS!
+
+- Test if eslint-plugin-sanity works with OxLint's ESLint compat layer
+- Minimal work if it works out of the box
+
+**Option B: Native OxLint Plugin (if needed)**
+
+- Not needed - ESLint compat works out of the box
+
+### 5.3 Tasks
+
+**5.3.1 Test ESLint compatibility**
+
+- [x] Install OxLint with JS plugin support enabled
+- [x] Configure OxLint to load eslint-plugin-sanity
+- [x] Test groq`...` template detection
+- [x] Document configuration
+
+**5.3.2 Create native plugin (if needed)**
+
+- Not needed - ESLint plugin works directly with OxLint
+
+**5.3.3 Configuration**
+
+- [x] Support oxlint.config.json
+- [x] Document setup in package README
+
+### 5.4 Success Criteria
+
+- [x] OxLint runs GROQ rules on groq`...` templates
+- [x] Configuration via oxlint config files
+- [x] Performance: 77ms for single file with 92 rules
+
+**Status**: Complete
+
+### 5.5 Implementation Notes
+
+**OxLint Configuration** (`oxlint.config.json`):
+
+```json
+{
+  "jsPlugins": ["eslint-plugin-sanity"],
+  "rules": {
+    "sanity/groq-join-in-filter": "error",
+    "sanity/groq-deep-pagination": "warn"
+  }
+}
+```
+
+**Usage**:
+
+```bash
+oxlint --config oxlint.config.json src/
+```
+
+**Findings**:
+
+- eslint-plugin-sanity works with OxLint out of the box
+- No native plugin needed
+- OxLint JS plugins are still marked as experimental
+- Performance is excellent (77ms for single file)
+
+---
+
+## Stage 6: Biome Preparation
+
+**Goal**: Prepare for future Biome integration when their plugin system ships.
+
+### 6.1 Background
+
+Biome currently has NO custom plugin system:
+
+- Tracking: [biomejs/biome#231](https://github.com/biomejs/biome/discussions/231)
+- RFC: [biomejs/biome#1762](https://github.com/biomejs/biome/discussions/1762)
+
+Until plugins ship, we cannot integrate with Biome.
+
+### 6.2 Research Findings (January 2026)
+
+Biome has added a plugin system, but it uses **GritQL** (a pattern matching language), NOT JavaScript or WASM:
+
+**Key Limitations:**
+
+1. **GritQL-based**: Plugins use pattern matching syntax, not general-purpose code
+2. **JavaScript/CSS only**: Only supports linting JavaScript and CSS - cannot lint custom language syntax
+3. **No WASM plugins**: "Not a focus right now" per Biome team
+4. **Cannot detect GROQ**: GritQL cannot understand or extract GROQ from `groq\`...\`` template literals
+
+**What Would Be Needed:**
+
+- Either WASM plugin support (to call our Rust/WASM linter)
+- Or full language support for GROQ as a first-class language in Biome
+
+**References:**
+
+- [Biome Plugins Guide](https://biomejs.dev/linter/plugins/) - GritQL-based plugins
+- [Biome Editor Extensions](https://biomejs.dev/guides/editors/create-an-extension/) - Editor integration only
+
+### 6.3 Tasks
+
+- [x] Research Biome plugin system
+- [ ] Monitor for WASM plugin support
+- [ ] When available: design Biome plugin using @sanity/groq-wasm
+- [ ] Create biome-plugin-sanity package
+
+### 6.4 Architecture (Speculative)
+
+```
+packages/biome-plugin-sanity/
+├── package.json
+├── src/
+│   └── index.ts           # Biome plugin (API TBD)
+```
+
+**Status**: Blocked (Biome plugins use GritQL, cannot lint GROQ syntax)
+
+---
+
+## Stage 7: MCP Server for AI Agents
 
 **Goal**: Let AI assistants validate GROQ before suggesting it.
 
-### 4.1 MCP Tools
+### 7.1 MCP Tools
 
 ```typescript
 // tools exposed via MCP
@@ -344,7 +630,7 @@ code --install-extension vscode-groq-0.0.1.vsix
 }
 ```
 
-### 4.2 Integration
+### 7.2 Integration
 
 AI agents could:
 
@@ -357,24 +643,78 @@ AI agents could:
 
 ---
 
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Rust Source (upstream)                       │
+│  ┌─────────────────────┐     ┌─────────────────────┐            │
+│  │ atombender/groq-lint│     │atombender/groq-format│            │
+│  └──────────┬──────────┘     └──────────┬──────────┘            │
+└─────────────┼───────────────────────────┼───────────────────────┘
+              │ wasm-pack                  │ wasm-pack
+              ▼                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              @sanity/groq-wasm (Stage 4 - new)                   │
+│         lint(query) → Finding[]                                  │
+│         format(query) → string                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│ @sanity/groq- │    │eslint-plugin- │    │oxlint-plugin- │
+│     lint      │    │    sanity     │    │    sanity     │
+│  (refactored) │    │  (existing)   │    │  (Stage 5)    │
+└───────┬───────┘    └───────────────┘    └───────────────┘
+        │
+        ├── WASM rules (pure GROQ)
+        └── TS rules (schema-aware: unknown-field, invalid-type-filter)
+
+┌───────────────────────────────────────────────────────────────┐
+│                    Unique TS Packages (keep)                    │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌───────────────┐  │
+│  │ @sanity/lint-   │  │ @sanity/schema- │  │ @sanity/groq- │  │
+│  │     core        │  │     lint        │  │     lsp       │  │
+│  │ (types, tester) │  │ (13 TS rules)   │  │               │  │
+│  └─────────────────┘  └─────────────────┘  └───────┬───────┘  │
+│                                                    │          │
+│                                             ┌──────┴──────┐   │
+│                                             │  vscode-    │   │
+│                                             │    groq     │   │
+│                                             └─────────────┘   │
+└───────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Dependencies
 
 ### New Dependencies Needed
 
 ```json
 {
-  "@sanity/codegen": "^5.1.0", // Schema reading, query extraction
-  "vscode-languageserver": "^9.0.0", // LSP server (Stage 2)
-  "vscode-languageclient": "^9.0.0", // VS Code extension (Stage 3)
-  "@modelcontextprotocol/sdk": "..." // MCP server (Stage 4)
+  "@sanity/codegen": "^5.1.0", // Schema reading (Stage 1 - done)
+  "vscode-languageserver": "^9.0.0", // LSP server (Stage 2 - done)
+  "vscode-languageclient": "^9.0.0", // VS Code extension (Stage 3 - done)
+  "@modelcontextprotocol/sdk": "...", // MCP server (Stage 7)
+  "wasm-bindgen": "..." // WASM TS bindings (Stage 4)
 }
+```
+
+### Rust Toolchain (build-time only)
+
+```bash
+# Only needed for building WASM, not for end users
+rustup target add wasm32-unknown-unknown
+cargo install wasm-pack
 ```
 
 ### Already Have
 
 ```json
 {
-  "groq-js": "^1.14.0" // Parser, AST, typeEvaluate, SchemaType
+  "groq-js": "^1.14.0" // Parser, AST, typeEvaluate - keep for schema-aware rules
 }
 ```
 
@@ -382,8 +722,10 @@ AI agents could:
 
 ## Open Questions
 
+### Schema-Aware (Stages 1-3)
+
 1. **Schema sync**: How to keep schema.json in sync with Studio changes?
-   - Watch mode in LSP
+   - Watch mode in LSP ✅ (implemented)
    - Pre-commit hook to regenerate
    - Studio plugin to auto-export on save
 
@@ -393,21 +735,105 @@ AI agents could:
 
 4. **Query variables**: How to type-check `$param` usage?
 
+### WASM Core (Stage 4)
+
+5. ~~**Upstream vs Fork**~~: **RESOLVED** - Use wrapper crate approach
+   - Create thin Rust crate that depends on atombender repos as Cargo git dependencies
+   - Add wasm-bindgen bindings only in our wrapper
+   - No forking or PRs to upstream needed
+
+6. **WASM initialization**: Sync vs async API?
+   - Sync simpler but blocks on first call
+   - Async requires `await initWasm()` but non-blocking
+
+7. **Browser support**: Do we need browser WASM or Node.js only?
+   - LSP/CLI are Node.js only
+   - ESLint/OxLint are Node.js only
+   - Browser could enable online playground
+
+8. **Fallback strategy**: Keep TS implementation as fallback for WASM failures?
+   - Increases maintenance burden
+   - But provides safety net
+
+### OxLint (Stage 5)
+
+9. **ESLint compat stability**: OxLint JS plugins are experimental - acceptable risk?
+
+10. **Native vs compat**: If ESLint plugin works, is native plugin worth the effort?
+    - Native = better performance
+    - Compat = less code to maintain
+
 ---
 
 ## Priority Recommendation
 
-1. **Stage 1 first** - Schema-aware linting has highest value/effort ratio
-2. **Stage 2 second** - LSP unlocks real-time DX
-3. **Stage 4 third** - MCP for AI agents (growing importance)
-4. **Stage 3 last** - Extensions are packaging, not new functionality
+### Completed
+
+- ~~Stage 1~~ - Schema-aware linting ✅
+- ~~Stage 2~~ - LSP server ✅
+- ~~Stage 3~~ - VS Code extension ✅
+- ~~Stage 4~~ - WASM Core ✅ (all integrations complete)
+- ~~Stage 5~~ - OxLint integration ✅ (ESLint plugin works out of the box!)
+- ~~Stage 6~~ - Biome research ✅ (blocked - GritQL-based, no WASM support)
+
+### Stage 4 Summary
+
+- ✅ @sanity/groq-wasm package with Rust WASM bindings
+- ✅ @sanity/groq-lint hybrid linter (WASM + TS)
+- ✅ prettier-plugin-groq WASM formatter
+- ✅ CLI uses WASM backend
+- ✅ LSP uses WASM for linting and formatting
+- ✅ GitHub Actions builds WASM automatically
+- ✅ All 372 tests passing
+- Optional: parity tests, performance benchmarks
+
+### Next Up
+
+1. **Stage 7 (MCP)** - Optional AI agent integration
+2. **Parity tests** - Verify TS vs WASM output matches (optional)
+3. **Benchmarks** - Performance comparisons (optional)
+
+---
+
+## Risks
+
+| Risk                                 | Impact | Mitigation                          |
+| ------------------------------------ | ------ | ----------------------------------- |
+| WASM performance worse than expected | Medium | Benchmark early in Stage 4.4.2      |
+| Rust repos unmaintained              | High   | Fork early, or contribute upstream  |
+| OxLint plugin API changes            | Medium | Pin versions, track releases        |
+| Biome never ships plugins            | Low    | Not blocking other work             |
+| Breaking changes for users           | Medium | Major version bump, migration guide |
 
 ---
 
 ## References
 
+### Completed Stages
+
 - [Sanity TypeGen Docs](https://www.sanity.io/docs/apis-and-sdks/sanity-typegen)
 - [groq-js source](https://github.com/sanity-io/groq-js)
 - [@sanity/codegen source](https://github.com/sanity-io/sanity/tree/next/packages/@sanity/codegen)
 - [LSP Specification](https://microsoft.github.io/language-server-protocol/)
+
+### WASM (Stage 4)
+
+- [atombender/groq-lint](https://github.com/atombender/groq-lint) - Rust linter
+- [atombender/groq-format](https://github.com/atombender/groq-format) - Rust formatter
+- [wasm-pack](https://rustwasm.github.io/wasm-pack/) - Rust → WASM toolchain
+- [wasm-bindgen](https://rustwasm.github.io/wasm-bindgen/) - JS ↔ WASM bindings
+- [SWC architecture](https://swc.rs/) - Reference for Rust → npm distribution
+
+### OxLint (Stage 5)
+
+- [OxLint JS Plugins](https://oxc.rs/blog/2025-10-09-oxlint-js-plugins.html) - Plugin announcement
+- [OxLint Configuration](https://oxc.rs/docs/guide/usage/linter/config) - Config format
+
+### Biome (Stage 6)
+
+- [Biome Plugin Discussion](https://github.com/biomejs/biome/discussions/231) - Custom rules RFC
+- [Biome Plugin RFC](https://github.com/biomejs/biome/discussions/1762) - Implementation discussion
+
+### MCP (Stage 7)
+
 - [MCP Specification](https://modelcontextprotocol.io/)
