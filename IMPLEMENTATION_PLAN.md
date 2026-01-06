@@ -226,15 +226,39 @@ Use @sanity/codegen's `findQueriesInSource` or our own ESLint extractor.
 
 ### 2.6 Success Criteria
 
-- [ ] LSP server starts and connects
-- [ ] Diagnostics for .groq files
-- [ ] Diagnostics for embedded GROQ in JS/TS
-- [ ] Hover shows field types
-- [ ] Completion for field names
-- [ ] Format on save works
-- [ ] Schema hot-reloading on change
+- [x] LSP server starts and connects
+- [x] Diagnostics for .groq files
+- [x] Diagnostics for embedded GROQ in JS/TS
+- [x] Hover shows field types
+- [x] Completion for field names
+- [x] Format on save works
+- [x] Schema hot-reloading on change
 
-**Status**: Not Started
+**Status**: Complete
+
+### 2.7 Implementation Notes
+
+**Package created:** `packages/groq-lsp` (`@sanity/groq-lsp`)
+
+**Files:**
+
+- `src/server.ts` - Main LSP server (Node IPC)
+- `src/capabilities/diagnostics.ts` - Lint integration via @sanity/groq-lint
+- `src/capabilities/hover.ts` - Type info and documentation
+- `src/capabilities/completion.ts` - Fields, functions, document types
+- `src/capabilities/formatting.ts` - Prettier integration
+- `src/schema/loader.ts` - Schema loading with file watching
+- `src/utils/groq-extractor.ts` - GROQ extraction from JS/TS files
+
+**Usage:**
+
+```bash
+# Start server
+npx @sanity/groq-lsp
+
+# Or use as library
+import { SchemaLoader, computeDocumentDiagnostics } from '@sanity/groq-lsp'
+```
 
 ---
 

@@ -1,0 +1,233 @@
+/**
+ * Completion capability for the GROQ Language Server
+ *
+ * Provides auto-completion for:
+ * - Field names (from schema)
+ * - _type values (document types)
+ * - GROQ functions
+ * - System fields (_id, _type, etc.)
+ */
+
+import type { CompletionItem, CompletionItemKind } from 'vscode-languageserver'
+import type { SchemaType } from 'groq-js'
+import type { GroqQuery } from '../types.js'
+
+/**
+ * Options for computing completions
+ */
+export interface CompletionOptions {
+  /** Schema for field/type completions */
+  schema?: SchemaType | undefined
+}
+
+/**
+ * Context about where completion is triggered
+ */
+interface CompletionContext {
+  /** What kind of completion to provide */
+  kind: 'type-value' | 'field' | 'function' | 'unknown'
+  /** Current document type context, if determinable */
+  documentType?: string | undefined
+  /** Partial text being typed */
+  prefix: string
+}
+
+/**
+ * Get completions for a position in a GROQ query
+ */
+export function getCompletions(
+  query: GroqQuery,
+  positionInQuery: number,
+  options: CompletionOptions = {}
+): CompletionItem[] {
+  const context = analyzeCompletionContext(query.query, positionInQuery)
+
+  switch (context.kind) {
+    case 'type-value':
+      return getTypeValueCompletions(options.schema, context.prefix)
+    case 'field':
+      return getFieldCompletions(options.schema, context.documentType, context.prefix)
+    case 'function':
+      return getFunctionCompletions(context.prefix)
+    default:
+      // Provide all possible completions
+      return [
+        ...getFieldCompletions(options.schema, context.documentType, context.prefix),
+        ...getFunctionCompletions(context.prefix),
+        ...getSystemFieldCompletions(context.prefix),
+      ]
+  }
+}
+
+/**
+ * Analyze the query context to determine what kind of completions to provide
+ */
+function analyzeCompletionContext(query: string, position: number): CompletionContext {
+  const before = query.slice(0, position)
+  const prefix = extractPrefix(before)
+
+  // Check if we're completing a _type value
+  // Patterns: _type == ", _type == ', _type != "
+  if (/_type\s*[=!]=\s*["']$/.test(before) || /_type\s*[=!]=\s*["'][a-zA-Z0-9]*$/.test(before)) {
+    return { kind: 'type-value', prefix: prefix.replace(/["']/g, '') }
+  }
+
+  // Try to find document type from earlier in the query
+  // This matches _type == "typeName" anywhere in the query before our position
+  const typeMatch = before.match(/_type\s*==\s*["'](\w+)["']/i)
+  const documentType = typeMatch?.[1]
+
+  // Check if we're after a dot (field access) or in a projection
+  if (/\.\s*\w*$/.test(before) || /{\s*[\w,\s]*$/.test(before)) {
+    return { kind: 'field', documentType, prefix }
+  }
+
+  // Check if we're likely typing a function
+  if (/[a-z]+$/.test(prefix) && !/->/.test(before.slice(-10))) {
+    return { kind: 'function', prefix }
+  }
+
+  return { kind: 'unknown', documentType, prefix }
+}
+
+/**
+ * Extract the prefix being typed (for filtering completions)
+ */
+function extractPrefix(text: string): string {
+  const match = text.match(/[a-zA-Z_][a-zA-Z0-9_]*$/)
+  return match?.[0] ?? ''
+}
+
+/**
+ * Get completions for _type values from schema
+ */
+function getTypeValueCompletions(schema: SchemaType | undefined, prefix: string): CompletionItem[] {
+  if (!schema || !Array.isArray(schema)) {
+    return []
+  }
+
+  return schema
+    .filter(
+      (type) => type.type === 'document' && type.name.toLowerCase().includes(prefix.toLowerCase())
+    )
+    .map((type) => ({
+      label: type.name,
+      kind: 12 as CompletionItemKind, // Value
+      detail: 'Document type',
+      insertText: type.name,
+      documentation: `Document type: ${type.name}`,
+    }))
+}
+
+/**
+ * Get completions for field names
+ */
+function getFieldCompletions(
+  schema: SchemaType | undefined,
+  documentType: string | undefined,
+  prefix: string
+): CompletionItem[] {
+  const completions: CompletionItem[] = []
+
+  // Add system fields
+  completions.push(...getSystemFieldCompletions(prefix))
+
+  // Add schema fields if schema and document type are available
+  if (schema && Array.isArray(schema) && documentType) {
+    const typeSchema = schema.find((t) => t.name === documentType)
+    if (typeSchema && 'attributes' in typeSchema && typeSchema.attributes) {
+      for (const [fieldName, _fieldDef] of Object.entries(typeSchema.attributes)) {
+        if (fieldName.toLowerCase().includes(prefix.toLowerCase())) {
+          completions.push({
+            label: fieldName,
+            kind: 5 as CompletionItemKind, // Field
+            detail: `Field on ${documentType}`,
+            insertText: fieldName,
+          })
+        }
+      }
+    }
+  }
+
+  return completions
+}
+
+/**
+ * Get completions for system fields
+ */
+function getSystemFieldCompletions(prefix: string): CompletionItem[] {
+  const systemFields = [
+    { name: '_id', doc: 'Unique document identifier' },
+    { name: '_type', doc: 'Document type name' },
+    { name: '_rev', doc: 'Document revision' },
+    { name: '_createdAt', doc: 'Creation timestamp' },
+    { name: '_updatedAt', doc: 'Last update timestamp' },
+    { name: '_key', doc: 'Array item key' },
+    { name: '_ref', doc: 'Reference target ID' },
+  ]
+
+  return systemFields
+    .filter((f) => f.name.toLowerCase().includes(prefix.toLowerCase()))
+    .map((f) => ({
+      label: f.name,
+      kind: 5 as CompletionItemKind, // Field
+      detail: 'System field',
+      documentation: f.doc,
+      insertText: f.name,
+    }))
+}
+
+/**
+ * Get completions for GROQ functions
+ */
+function getFunctionCompletions(prefix: string): CompletionItem[] {
+  const functions = [
+    { name: 'count', sig: 'count(array)', doc: 'Returns the number of items' },
+    { name: 'defined', sig: 'defined(value)', doc: 'Returns true if value is not null' },
+    { name: 'coalesce', sig: 'coalesce(a, b, ...)', doc: 'Returns first non-null value' },
+    { name: 'select', sig: 'select(cond => val, ...)', doc: 'Conditional value selection' },
+    { name: 'length', sig: 'length(str|arr)', doc: 'Returns length' },
+    { name: 'lower', sig: 'lower(string)', doc: 'Converts to lowercase' },
+    { name: 'upper', sig: 'upper(string)', doc: 'Converts to uppercase' },
+    { name: 'now', sig: 'now()', doc: 'Current timestamp' },
+    { name: 'round', sig: 'round(num, precision?)', doc: 'Rounds a number' },
+    { name: 'string', sig: 'string(value)', doc: 'Converts to string' },
+    { name: 'references', sig: 'references(id)', doc: 'Checks if document references ID' },
+    { name: 'dateTime', sig: 'dateTime(string)', doc: 'Parses ISO 8601 date' },
+    { name: 'order', sig: 'order(field, dir?)', doc: 'Sorts results' },
+    { name: 'score', sig: 'score(...conditions)', doc: 'Relevance scoring' },
+    { name: 'boost', sig: 'boost(cond, value)', doc: 'Boosts search score' },
+    // Namespace functions
+    { name: 'pt::text', sig: 'pt::text(blocks)', doc: 'Extract text from Portable Text' },
+    { name: 'geo::distance', sig: 'geo::distance(a, b)', doc: 'Distance between points' },
+    { name: 'math::sum', sig: 'math::sum(array)', doc: 'Sum of numbers' },
+    { name: 'math::avg', sig: 'math::avg(array)', doc: 'Average of numbers' },
+    { name: 'math::min', sig: 'math::min(array)', doc: 'Minimum value' },
+    { name: 'math::max', sig: 'math::max(array)', doc: 'Maximum value' },
+    { name: 'array::unique', sig: 'array::unique(arr)', doc: 'Remove duplicates' },
+    { name: 'array::compact', sig: 'array::compact(arr)', doc: 'Remove nulls' },
+    { name: 'array::join', sig: 'array::join(arr, sep)', doc: 'Join into string' },
+    { name: 'string::split', sig: 'string::split(str, sep)', doc: 'Split string' },
+    { name: 'string::startsWith', sig: 'string::startsWith(str, prefix)', doc: 'Check prefix' },
+    { name: 'sanity::projectId', sig: 'sanity::projectId()', doc: 'Current project ID' },
+    { name: 'sanity::dataset', sig: 'sanity::dataset()', doc: 'Current dataset' },
+  ]
+
+  return functions
+    .filter((f) => f.name.toLowerCase().includes(prefix.toLowerCase()))
+    .map((f) => ({
+      label: f.name,
+      kind: 3 as CompletionItemKind, // Function
+      detail: f.sig,
+      documentation: f.doc,
+      insertText: f.name.includes('::') ? f.name : `${f.name}($1)`,
+      insertTextFormat: 2, // Snippet
+    }))
+}
+
+/**
+ * Get trigger characters for completion
+ */
+export function getCompletionTriggerCharacters(): string[] {
+  return ['.', '"', "'", '[', '{', ':']
+}

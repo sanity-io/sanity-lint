@@ -1,0 +1,56 @@
+{
+  "name": "@sanity/groq-lsp",
+  "version": "0.0.1",
+  "description": "Language Server Protocol implementation for GROQ",
+  "author": "Sanity.io <hello@sanity.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanity-io/sanity-lint.git",
+    "directory": "packages/groq-lsp"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "groq-lsp": "./dist/server.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@sanity/groq-lint": "workspace:*",
+    "@sanity/lint-core": "workspace:*",
+    "groq-js": "^1.14.0",
+    "prettier": "^3.4.2",
+    "prettier-plugin-groq": "workspace:*",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-uri": "^3.0.8"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "sanity",
+    "groq",
+    "lsp",
+    "language-server"
+  ]
+}
