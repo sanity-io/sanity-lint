@@ -43,7 +43,7 @@ export function createESLintRule(groqRule: GroqRule): ESLintRule.RuleModule {
 
           try {
             const query = extractGroqString(node)
-            const result = lint(query, { rules: buildSingleRuleConfig(groqRule.id) })
+            const result = lint(query, { config: { rules: buildSingleRuleConfig(groqRule.id) } })
 
             for (const finding of result.findings) {
               if (finding.ruleId === groqRule.id) {

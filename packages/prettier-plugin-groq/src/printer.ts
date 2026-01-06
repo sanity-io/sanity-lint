@@ -243,22 +243,29 @@ function createPrintNode(builders: Builders) {
         return group(['select(', indent([softline, join([',', line], allArgs)]), softline, ')'])
       }
 
+      // @ts-expect-error - SelectAlternative exists at runtime but not in groq-js types
       case 'SelectAlternative':
         return [
+          // @ts-expect-error - condition property exists at runtime
           path.call((p) => printNode(p.node, print, p), 'condition'),
           ' => ',
           path.call((p) => printNode(p.node, print, p), 'value'),
         ]
 
+      // @ts-expect-error - InRange exists at runtime but not in groq-js types
       case 'InRange':
         return [
+          // @ts-expect-error - base property exists at runtime
           path.call((p) => printNode(p.node, print, p), 'base'),
           ' in ',
+          // @ts-expect-error - range property exists at runtime
           path.call((p) => printNode(p.node, print, p), 'range'),
         ]
 
+      // @ts-expect-error - Context exists at runtime but not in groq-js types
       case 'Context':
         // Internal node, shouldn't appear in user queries
+        // @ts-expect-error - base property exists at runtime
         return path.call((p) => printNode(p.node, print, p), 'base')
 
       default:

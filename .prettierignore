@@ -1,0 +1,10 @@
+# Build artifacts
+dist/
+node_modules/
+*.vsix
+
+# Test fixtures that are intentionally unformatted
+dev/prettier-test/queries/unformatted.groq
+
+# pnpm lockfile
+pnpm-lock.yaml
