@@ -139,25 +139,70 @@ npm install -D @sanity/groq-lsp
 # Install dependencies
 pnpm install
 
-# Build extension
+# Build all packages (required for LSP server)
 pnpm build
 
-# Watch mode
-pnpm watch
+# Watch mode for extension only
+pnpm --filter vscode-groq watch
 
 # Run tests
 pnpm test
 
 # Package extension
-pnpm package
+pnpm --filter vscode-groq package
 ```
 
-### Debugging
+### Testing in VS Code / Cursor
 
-1. Open this folder in VS Code
-2. Press F5 to launch Extension Development Host
-3. Open a file with GROQ queries
-4. Check the "GROQ" output channel for logs
+The easiest way to test the extension during development:
+
+1. **Open the monorepo root** in VS Code or Cursor:
+
+   ```bash
+   code /path/to/sanity-lint
+   # or
+   cursor /path/to/sanity-lint
+   ```
+
+2. **Build all packages** (the extension needs the LSP server):
+
+   ```bash
+   pnpm build
+   ```
+
+3. **Press F5** to launch the Extension Development Host
+   - This opens a new editor window with the extension loaded
+   - The window opens `dev/editor-test` which has a `schema.json` for testing
+
+4. **Open test files** in the new window:
+   - `src/queries-with-issues.ts` - Has intentional GROQ issues
+   - `src/queries-nextjs.tsx` - Next.js style queries
+
+5. **Check the GROQ output channel** (View > Output > GROQ) for logs
+
+### What to Test
+
+- **Syntax highlighting**: GROQ in `groq\`...\`` template literals should be colored
+- **Diagnostics**: Squiggly lines for lint errors like:
+  - `*[_type == "psot"]` → "psot" doesn't exist (typo)
+  - `*[author->name == "Bob"]` → join-in-filter warning
+- **Hover**: Hover over GROQ elements for type info and documentation
+- **Completions**: Type `groq` to see snippet suggestions
+- **Schema-aware**: The `dev/editor-test/schema.json` defines `post`, `author`, `category` types
+
+### Debugging Tips
+
+- **View logs**: Open View > Output, select "GROQ" from dropdown
+- **Restart LSP**: Run command "GROQ: Restart Language Server"
+- **Schema not loading?** Ensure `schema.json` is in the workspace root
+- **No errors shown?** Check that the LSP server started (see output channel)
+
+### Launch Configurations
+
+The `.vscode/launch.json` provides two configurations:
+
+- **Run GROQ Extension**: Builds before launching (recommended)
+- **Run GROQ Extension (No Build)**: Skips build (faster iteration)
 
 ## Related Packages
 

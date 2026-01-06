@@ -3,7 +3,9 @@
  * Tests that the plugin works in .tsx files with JSX.
  */
 
-import { groq } from 'next-sanity'
+import { groq, defineQuery } from 'next-sanity'
+
+const postQuery = groq`*[_type == "post"] { title, body, author->{ name, image } }`
 
 // These queries have issues - should show warnings in editor
 const QUERIES = {

@@ -136,13 +136,25 @@ async function startClient(context: ExtensionContext): Promise<void> {
  * Find the server module path
  */
 async function findServerModule(context: ExtensionContext): Promise<string | undefined> {
-  // Try bundled server first (when extension is packaged)
+  outputChannel?.appendLine('Looking for GROQ language server...')
+
+  // 1. For development: try sibling package in monorepo FIRST
+  const devServer = context.asAbsolutePath(path.join('..', 'groq-lsp', 'dist', 'server.js'))
+  outputChannel?.appendLine(`Checking dev server: ${devServer}`)
+  if (await fileExists(devServer)) {
+    outputChannel?.appendLine('Found dev server in monorepo')
+    return devServer
+  }
+
+  // 2. Try bundled server (when extension is packaged)
   const bundledServer = context.asAbsolutePath(path.join('server', 'dist', 'server.js'))
+  outputChannel?.appendLine(`Checking bundled server: ${bundledServer}`)
   if (await fileExists(bundledServer)) {
+    outputChannel?.appendLine('Found bundled server')
     return bundledServer
   }
 
-  // Try workspace node_modules
+  // 3. Try workspace node_modules
   const workspaceFolders = workspace.workspaceFolders
   if (workspaceFolders && workspaceFolders.length > 0) {
     const workspaceRoot = workspaceFolders[0]?.uri.fsPath
@@ -155,32 +167,15 @@ async function findServerModule(context: ExtensionContext): Promise<string | und
         'dist',
         'server.js'
       )
+      outputChannel?.appendLine(`Checking workspace node_modules: ${workspaceServer}`)
       if (await fileExists(workspaceServer)) {
+        outputChannel?.appendLine('Found server in workspace node_modules')
         return workspaceServer
       }
     }
   }
 
-  // Try global node_modules via npx resolution
-  // The server should be started via npx @sanity/groq-lsp in this case
-  try {
-    const { execSync } = await import('node:child_process')
-    const resolvedPath = execSync('npx --yes --package=@sanity/groq-lsp which groq-lsp', {
-      encoding: 'utf8',
-    }).trim()
-    if (resolvedPath && (await fileExists(resolvedPath))) {
-      return resolvedPath
-    }
-  } catch {
-    // npx resolution failed, continue
-  }
-
-  // For development: try sibling package in monorepo
-  const devServer = context.asAbsolutePath(path.join('..', 'groq-lsp', 'dist', 'server.js'))
-  if (await fileExists(devServer)) {
-    return devServer
-  }
-
+  outputChannel?.appendLine('No server found')
   return undefined
 }
 
