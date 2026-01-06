@@ -277,7 +277,43 @@ import { SchemaLoader, computeDocumentDiagnostics } from '@sanity/groq-lsp'
 - **Zed**: Extension or LSP config
 - **Cursor**: Should work via VS Code extension
 
-**Status**: Not Started
+**Status**: Complete
+
+### 3.3 Implementation Notes
+
+**Package created:** `packages/vscode-groq`
+
+**Files:**
+
+- `package.json` - VS Code extension manifest with contributions
+- `src/extension.ts` - LSP client connecting to @sanity/groq-lsp
+- `language-configuration.json` - Brackets, comments, auto-close pairs
+- `syntaxes/groq.tmLanguage.json` - TextMate grammar for .groq files
+- `syntaxes/groq-injection.tmLanguage.json` - Injection grammar for groq`...` in JS/TS
+- `snippets/groq.json` - GROQ snippets for .groq files
+- `snippets/groq-ts.json` - GROQ snippets for JS/TS files
+
+**Features:**
+
+- Syntax highlighting for .groq files and embedded GROQ in JS/TS
+- Diagnostics (linting) via LSP
+- Auto-completion for fields, functions, document types
+- Hover information (types and documentation)
+- Formatting via prettier-plugin-groq
+- Configurable settings (schema path, max diagnostics, formatting)
+- Commands: Restart Server, Show Output Channel
+
+**Usage:**
+
+```bash
+# Build and package
+cd packages/vscode-groq
+pnpm build
+pnpm package
+
+# Install the .vsix
+code --install-extension vscode-groq-0.0.1.vsix
+```
 
 ---
 
