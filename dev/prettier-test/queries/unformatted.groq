@@ -1,0 +1,1 @@
+*[_type == "article" && author._ref == $authorId] {title,"authorName": author->name,publishedAt,categories[]->{ title, slug },"relatedPosts": *[_type == "article" && references(^._id)][0...3] {title,slug}}

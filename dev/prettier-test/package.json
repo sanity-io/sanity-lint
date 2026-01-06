@@ -1,0 +1,17 @@
+{
+  "name": "prettier-test",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Test environment for prettier-plugin-groq",
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:groq": "prettier --write '**/*.groq'",
+    "demo": "node demo.js"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "prettier-plugin-groq": "workspace:*"
+  }
+}

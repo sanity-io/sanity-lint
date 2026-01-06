@@ -1,0 +1,4 @@
+{
+  "plugins": ["../../packages/prettier-plugin-groq/dist/index.js"],
+  "printWidth": 80
+}

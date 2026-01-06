@@ -1,0 +1,50 @@
+{
+  "name": "prettier-plugin-groq",
+  "version": "0.0.1",
+  "description": "Prettier plugin for formatting GROQ queries",
+  "author": "Sanity.io <hello@sanity.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanity-io/sanity-lint.git",
+    "directory": "packages/prettier-plugin-groq"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "groq-js": "^1.14.0"
+  },
+  "peerDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "devDependencies": {
+    "@sanity/lint-core": "workspace:*",
+    "prettier": "^3.4.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "sanity",
+    "groq",
+    "prettier",
+    "prettier-plugin",
+    "formatter"
+  ]
+}
