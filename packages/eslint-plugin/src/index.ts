@@ -31,14 +31,14 @@
  */
 
 import type { ESLint, Linter } from 'eslint'
-import { createRequire } from 'node:module'
 import { rules as groqRules } from '@sanity/groq-lint'
 import { rules as schemaRules } from '@sanity/schema-lint'
 import { createAllRules } from './utils/rule-factory'
 import { createAllSchemaRules } from './utils/schema-rule-factory'
 
-const require = createRequire(import.meta.url)
-const { version } = require('../package.json') as { version: string }
+// Version is injected at build time by tsup
+declare const PACKAGE_VERSION: string
+const version = typeof PACKAGE_VERSION !== 'undefined' ? PACKAGE_VERSION : '0.0.0'
 
 // Create ESLint rules from all GROQ lint rules
 const groqEslintRules = createAllRules(groqRules)
