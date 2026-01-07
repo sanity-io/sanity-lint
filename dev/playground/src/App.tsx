@@ -3,7 +3,7 @@ import { lint } from '@sanity/groq-lint'
 import type { Finding } from '@sanity/lint-core'
 import type { SchemaType } from 'groq-js'
 import * as prettier from 'prettier/standalone'
-import * as groqPlugin from 'prettier-plugin-groq'
+import * as groqPlugin from '@sanity/prettier-plugin-groq'
 
 /**
  * Sample schema for testing schema-aware rules

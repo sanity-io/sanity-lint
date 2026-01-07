@@ -75,6 +75,9 @@ importers:
       '@sanity/icons':
         specifier: ^3.0.0
         version: 3.7.4(react@18.3.1)
+      '@sanity/prettier-plugin-groq':
+        specifier: workspace:*
+        version: link:../../packages/prettier-plugin-groq
       '@typescript-eslint/parser':
         specifier: ^8.18.0
         version: 8.52.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
@@ -87,9 +90,6 @@ importers:
       prettier:
         specifier: ^3.4.2
         version: 3.7.4
-      prettier-plugin-groq:
-        specifier: workspace:*
-        version: link:../../packages/prettier-plugin-groq
       sanity:
         specifier: ^5.1.0
         version: 5.1.0(@emotion/is-prop-valid@1.2.2)(@portabletext/sanity-bridge@2.0.0(@types/react@18.3.27))(@types/node@22.19.3)(@types/react@18.3.27)(immer@10.2.0)(jiti@2.6.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-components@6.2.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -102,12 +102,12 @@ importers:
       '@sanity/groq-lint':
         specifier: workspace:*
         version: link:../../packages/groq-lint
+      '@sanity/prettier-plugin-groq':
+        specifier: workspace:*
+        version: link:../../packages/prettier-plugin-groq
       prettier:
         specifier: ^3.4.2
         version: 3.7.4
-      prettier-plugin-groq:
-        specifier: workspace:*
-        version: link:../../packages/prettier-plugin-groq
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -133,12 +133,12 @@ importers:
 
   dev/prettier-test:
     devDependencies:
+      '@sanity/prettier-plugin-groq':
+        specifier: workspace:*
+        version: link:../../packages/prettier-plugin-groq
       prettier:
         specifier: ^3.4.2
         version: 3.7.4
-      prettier-plugin-groq:
-        specifier: workspace:*
-        version: link:../../packages/prettier-plugin-groq
 
   packages/core:
     dependencies:
@@ -217,15 +217,15 @@ importers:
       '@sanity/lint-core':
         specifier: workspace:*
         version: link:../core
+      '@sanity/prettier-plugin-groq':
+        specifier: workspace:*
+        version: link:../prettier-plugin-groq
       groq-js:
         specifier: ^1.14.0
         version: 1.25.0
       prettier:
         specifier: ^3.4.2
         version: 3.7.4
-      prettier-plugin-groq:
-        specifier: workspace:*
-        version: link:../prettier-plugin-groq
       vscode-languageserver:
         specifier: ^9.0.1
         version: 9.0.1
@@ -8729,7 +8729,7 @@ snapshots:
   '@eslint/config-array@0.21.1':
     dependencies:
       '@eslint/object-schema': 2.1.7
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -8745,7 +8745,7 @@ snapshots:
   '@eslint/eslintrc@3.3.3':
     dependencies:
       ajv: 6.12.6
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       espree: 10.4.0
       globals: 14.0.0
       ignore: 5.3.2
@@ -10346,7 +10346,7 @@ snapshots:
       '@typescript-eslint/types': 8.52.0
       '@typescript-eslint/typescript-estree': 8.52.0(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.52.0
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       eslint: 9.39.2(jiti@2.6.1)
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -10356,7 +10356,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.52.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.52.0
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -10375,7 +10375,7 @@ snapshots:
       '@typescript-eslint/types': 8.52.0
       '@typescript-eslint/typescript-estree': 8.52.0(typescript@5.9.3)
       '@typescript-eslint/utils': 8.52.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       eslint: 9.39.2(jiti@2.6.1)
       ts-api-utils: 2.4.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -10390,7 +10390,7 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.52.0(typescript@5.9.3)
       '@typescript-eslint/types': 8.52.0
       '@typescript-eslint/visitor-keys': 8.52.0
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       minimatch: 9.0.5
       semver: 7.7.3
       tinyglobby: 0.2.15
@@ -10455,7 +10455,7 @@ snapshots:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 0.2.3
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       istanbul-lib-coverage: 3.2.2
       istanbul-lib-report: 3.0.1
       istanbul-lib-source-maps: 5.0.6
@@ -11148,10 +11148,6 @@ snapshots:
 
   debounce@1.2.1: {}
 
-  debug@4.4.3:
-    dependencies:
-      ms: 2.1.3
-
   debug@4.4.3(supports-color@8.1.1):
     dependencies:
       ms: 2.1.3
@@ -11471,7 +11467,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       escape-string-regexp: 4.0.0
       eslint-scope: 8.4.0
       eslint-visitor-keys: 4.2.1
@@ -11918,14 +11914,14 @@ snapshots:
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -12112,7 +12108,7 @@ snapshots:
   istanbul-lib-source-maps@5.0.6:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       istanbul-lib-coverage: 3.2.2
     transitivePeerDependencies:
       - supports-color
@@ -13968,7 +13964,7 @@ snapshots:
       cac: 6.7.14
       chokidar: 4.0.3
       consola: 3.4.2
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       esbuild: 0.27.2
       fix-dts-default-cjs-exports: 1.0.1
       joycon: 3.1.1
@@ -14198,7 +14194,7 @@ snapshots:
   vite-node@2.1.9(@types/node@22.19.3):
     dependencies:
       cac: 6.7.14
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       es-module-lexer: 1.7.0
       pathe: 1.1.2
       vite: 5.4.21(@types/node@22.19.3)
@@ -14291,7 +14287,7 @@ snapshots:
       '@vitest/spy': 2.1.9
       '@vitest/utils': 2.1.9
       chai: 5.3.3
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       expect-type: 1.3.0
       magic-string: 0.30.21
       pathe: 1.1.2

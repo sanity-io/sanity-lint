@@ -32,7 +32,7 @@ import { getCompletions, getCompletionTriggerCharacters } from './capabilities/c
 import { formatDocument, formatGroqFile } from './capabilities/formatting.js'
 import type { GroqQuery, DocumentState } from './types.js'
 import { initLinter } from '@sanity/groq-lint'
-import { initWasmFormatter } from 'prettier-plugin-groq'
+import { initWasmFormatter } from '@sanity/prettier-plugin-groq'
 
 // Create connection using Node IPC
 const connection = createConnection(ProposedFeatures.all)

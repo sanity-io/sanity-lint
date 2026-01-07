@@ -19,7 +19,7 @@
     "eslint": "^9.0.0",
     "eslint-plugin-sanity": "workspace:*",
     "prettier": "^3.4.2",
-    "prettier-plugin-groq": "workspace:*",
+    "@sanity/prettier-plugin-groq": "workspace:*",
     "sanity": "^5.1.0",
     "typescript": "^5.5.0"
   },

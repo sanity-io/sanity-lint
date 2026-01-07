@@ -1,6 +1,9 @@
 {
-  "name": "prettier-plugin-groq",
+  "name": "@sanity/prettier-plugin-groq",
   "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Prettier plugin for formatting GROQ queries",
   "author": "Sanity.io <hello@sanity.io>",
   "license": "MIT",
