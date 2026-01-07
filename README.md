@@ -15,7 +15,7 @@ This monorepo contains linting tools for Sanity, with integrations for different
 | Package                                              | Description                                   |
 | ---------------------------------------------------- | --------------------------------------------- |
 | **[eslint-plugin-sanity](./packages/eslint-plugin)** | ESLint plugin - lint rules in your IDE and CI |
-| **[vscode-groq](./packages/vscode-groq)**            | VS Code/Cursor extension with LSP support     |
+| **[vscode-sanity](./packages/vscode-sanity)**        | VS Code/Cursor extension with LSP support     |
 | **[@sanity/groq-lint](./packages/groq-lint)**        | Standalone CLI for linting GROQ queries       |
 
 ### Core Libraries

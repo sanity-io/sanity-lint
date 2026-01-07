@@ -778,14 +778,14 @@ cargo install wasm-pack
 
 - ✅ **Stage 1** - Schema-aware linting
 - ✅ **Stage 2** - LSP server
-- ✅ **Stage 3** - VS Code extension (vscode-groq)
+- ✅ **Stage 3** - VS Code extension (vscode-sanity)
 - ✅ **Stage 4** - WASM Core (all integrations complete)
 - ✅ **Stage 5** - OxLint integration (ESLint plugin works out of the box)
 - ✅ **Stage 6** - Biome research (blocked - no viable integration path)
 
 ### In Progress
 
-- 🔄 **Stage 7** - Merge vscode-sanity into monorepo (Not Started)
+- 🔄 **Stage 7** - Merge vscode-sanity into monorepo (7.8 Complete - docs updated)
 
 ### Summary
 
@@ -853,7 +853,7 @@ cargo install wasm-pack
 
 **Goal**: Import `sanity-io/vscode-sanity` into this monorepo and enhance it with our LSP features (linting, formatting, completions). This is preparation work only - publishing will be coordinated separately with the Sanity team.
 
-**Status**: In Progress (7.5 Complete)
+**Status**: In Progress (7.8 Complete)
 
 ### 7.1 Background
 
@@ -1306,11 +1306,11 @@ Update all references from `vscode-groq` to `vscode-sanity` throughout the monor
 
 **Success Criteria:**
 
-- [ ] No references to "vscode-groq" remain (except git history)
-- [ ] Root README accurately describes vscode-sanity
-- [ ] CLAUDE.md packages table is accurate
-- [ ] All internal links work
-- [ ] Package README documents all features
+- [x] No references to "vscode-groq" remain (except git history and historical docs)
+- [x] Root README accurately describes vscode-sanity
+- [x] CLAUDE.md packages table is accurate
+- [x] All internal links work
+- [ ] Package README documents all features (deferred - existing README sufficient)
 
 ### 7.9 Publishing & Migration (Out of Scope)
 
