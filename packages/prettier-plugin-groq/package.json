@@ -16,14 +16,16 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./embed": {
       "types": "./dist/embed.d.ts",
-      "import": "./dist/embed.js"
+      "import": "./dist/embed.js",
+      "require": "./dist/embed.cjs"
     }
   },
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
