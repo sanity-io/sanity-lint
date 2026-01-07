@@ -1,5 +1,15 @@
 # @sanity/lint-core
 
+## 0.0.3
+
+### Patch Changes
+
+- [#15](https://github.com/sanity-io/sanity-lint/pull/15) [`10068a2`](https://github.com/sanity-io/sanity-lint/commit/10068a2ab9b0f3fdc4a60e4f933b12f595e10115) Thanks [@kmelve](https://github.com/kmelve)! - Widen vitest peer dependency to >=2.0.0
+
+  The `/testing` export only uses basic vitest APIs (`describe`, `it`, `expect`) that are
+  stable across vitest 2.x, 3.x, and 4.x. This allows projects using newer vitest versions
+  to use `@sanity/lint-core/testing` without peer dependency warnings.
+
 ## 0.0.2
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @sanity/groq-lsp
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [[`10068a2`](https://github.com/sanity-io/sanity-lint/commit/10068a2ab9b0f3fdc4a60e4f933b12f595e10115)]:
+  - @sanity/lint-core@0.0.3
+  - @sanity/groq-lint@0.0.3
+  - @sanity/prettier-plugin-groq@0.0.2
+
 ## 0.0.3
 
 ### Patch Changes
