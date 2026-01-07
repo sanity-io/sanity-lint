@@ -18,14 +18,16 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./testing": {
       "types": "./dist/testing.d.ts",
-      "import": "./dist/testing.js"
+      "import": "./dist/testing.js",
+      "require": "./dist/testing.cjs"
     }
   },
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
