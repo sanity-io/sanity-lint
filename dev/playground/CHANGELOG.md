@@ -1,5 +1,13 @@
 # groq-lint-playground
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @sanity/groq-lint@0.0.3
+  - @sanity/prettier-plugin-groq@0.0.2
+
 ## 0.0.2
 
 ### Patch Changes
