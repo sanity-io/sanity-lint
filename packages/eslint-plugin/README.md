@@ -1,8 +1,38 @@
 # eslint-plugin-sanity
 
-ESLint plugin for linting GROQ queries and Sanity schemas.
+Catch bugs in your GROQ queries and schema definitions before they hit production.
 
 Works with both **ESLint** and **OxLint**.
+
+## What It Catches
+
+**GROQ queries:**
+
+```typescript
+// ❌ Performance issue - joins in filters cause full scans
+const query = groq`*[_type == "post" && author->name == "John"]`
+// ⚠️ sanity/groq-join-in-filter
+
+// ❌ Typo that silently returns nothing (with schema-aware linting)
+const query = groq`*[_type == "psot"]`
+// ⚠️ sanity/groq-invalid-type-filter: Type "psot" not found in schema
+```
+
+**Schema definitions:**
+
+```typescript
+// ❌ Missing defineType wrapper
+export const post = {
+  name: 'post',
+  type: 'document',
+  fields: [...]
+}
+// ⚠️ sanity/schema-missing-define-type
+
+// ❌ Reserved field name that would break at runtime
+defineField({ name: '_type', type: 'string' })
+// ⚠️ sanity/schema-reserved-field-name
+```
 
 ## Installation
 

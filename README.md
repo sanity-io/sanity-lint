@@ -1,8 +1,8 @@
 # Sanity Lint
 
-> Linting tools for Sanity projects
+Catch GROQ bugs and performance issues before they hit production.
 
-Catch performance issues and best practice violations in your Sanity code before they hit production.
+This monorepo provides linting tools for Sanity projects. **With schema-aware linting enabled**, it catches typos in field names, invalid type filters, and queries that would silently return empty results. It also flags performance patterns that slow down your app at scale.
 
 **[Try the Playground](https://sanity-lint.sanity.dev)** - Test GROQ queries against lint rules in your browser
 
@@ -31,7 +31,7 @@ This monorepo contains linting tools for Sanity, with integrations for different
 
 ## Quick Start
 
-### ESLint Plugin
+### ESLint Plugin (Recommended)
 
 The easiest way to use Sanity Lint is through the ESLint plugin:
 
@@ -44,12 +44,18 @@ npm install eslint-plugin-sanity --save-dev
 import sanity from 'eslint-plugin-sanity'
 
 export default [
-  sanity.configs.recommended,
-  // ... your other configs
+  ...sanity.configs.recommended, // ← start here
 ]
 ```
 
 This gives you IDE integration (VS Code, Cursor, etc.) and CI linting for both GROQ queries and schema definitions.
+
+**What you get:**
+
+- **Correctness** (schema-aware): Catches typos, invalid fields, and type mismatches. _Requires running `npx sanity schema extract` first._
+- **Performance**: Catches expensive patterns like joins in filters and deep pagination. _Works out of the box._
+
+See the [eslint-plugin-sanity README](./packages/eslint-plugin) for detailed setup, monorepo configuration, and rule customization.
 
 ### Standalone CLI
 
