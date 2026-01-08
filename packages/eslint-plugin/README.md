@@ -2,7 +2,7 @@
 
 ESLint plugin for linting GROQ queries and Sanity schemas.
 
-Works with both **ESLint** and **OxLint**.
+Works with **ESLint**, **OxLint**, and other ESLint-compatible tools.
 
 ## Installation
 
@@ -10,7 +10,7 @@ Works with both **ESLint** and **OxLint**.
 npm install eslint-plugin-sanity
 ```
 
-## Usage with ESLint
+## Quick Start
 
 ```javascript
 // eslint.config.js
@@ -22,29 +22,6 @@ export default [
   // ...sanity.configs.strict,
 ]
 ```
-
-## Usage with OxLint
-
-OxLint supports ESLint-compatible JS plugins. Our plugin works out of the box:
-
-```json
-// oxlint.config.json
-{
-  "jsPlugins": ["eslint-plugin-sanity"],
-  "rules": {
-    "sanity/groq-join-in-filter": "error",
-    "sanity/groq-deep-pagination": "warn"
-  }
-}
-```
-
-Then run:
-
-```bash
-oxlint --config oxlint.config.json src/
-```
-
-> **Note**: OxLint JS plugins are experimental. See [OxLint JS Plugins](https://oxc.rs/docs/guide/usage/linter/js-plugins) for details.
 
 ## Configurations
 
@@ -230,6 +207,64 @@ Or auto-detect:
 - `Unexpected top-level property "name"` - Version mismatch between `eslint-config-next` and `@next/eslint-plugin-next`
 
 > **Note**: The CLI (`npx eslint .`) may work even when the extension doesn't. Check the ESLint Output panel for config loading errors.
+
+## ESLint, Prettier, and Modern Alternatives
+
+### ESLint vs Prettier
+
+**ESLint** and **Prettier** serve different purposes and work great together:
+
+| Tool         | Purpose                       | Examples                                          |
+| ------------ | ----------------------------- | ------------------------------------------------- |
+| **ESLint**   | Catches bugs and bad patterns | Unused variables, unsafe queries, missing `await` |
+| **Prettier** | Formats code consistently     | Indentation, line length, quote style             |
+
+`eslint-plugin-sanity` is an ESLint plugin - it catches GROQ query issues and schema problems. Use it alongside Prettier for formatting.
+
+**Recommended setup:**
+
+```json
+// package.json
+{
+  "scripts": {
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write ."
+  }
+}
+```
+
+### OxLint (Faster Alternative)
+
+[OxLint](https://oxc.rs) is a Rust-based linter that's ~50-100x faster than ESLint. It supports ESLint plugins via JS plugin compatibility:
+
+```json
+// oxlint.config.json
+{
+  "jsPlugins": ["eslint-plugin-sanity"],
+  "rules": {
+    "sanity/groq-join-in-filter": "error",
+    "sanity/groq-deep-pagination": "warn"
+  }
+}
+```
+
+```bash
+oxlint --config oxlint.config.json src/
+```
+
+**When to use OxLint:**
+
+- Large codebases where ESLint is slow
+- CI/CD pipelines where speed matters
+- Projects that don't need the full ESLint ecosystem
+
+> **Note**: OxLint JS plugins are experimental. Not all ESLint features are supported.
+
+### Biome (All-in-One)
+
+[Biome](https://biomejs.dev) combines linting and formatting in one fast Rust tool. However, **Biome doesn't support ESLint plugins** - it has its own rule set.
+
+For Sanity projects, we recommend ESLint (or OxLint) + Prettier over Biome, since you get access to `eslint-plugin-sanity` rules.
 
 ## License
 
