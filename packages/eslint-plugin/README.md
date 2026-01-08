@@ -1,6 +1,8 @@
 # eslint-plugin-sanity
 
-ESLint plugin for linting GROQ queries and Sanity schemas.
+Catch GROQ bugs before they hit production.
+
+This ESLint plugin validates your GROQ queries and Sanity schemas in your editor—finding typos, missing fields, and performance issues at write-time instead of runtime. Point it at your schema and get real-time validation against your actual document types.
 
 Works with **ESLint**, **OxLint**, and other ESLint-compatible tools.
 
@@ -12,14 +14,67 @@ npm install eslint-plugin-sanity
 
 ## Quick Start
 
+**Use `recommended` unless you have a reason not to.** It flags serious issues as errors and suggestions as warnings—a good balance for most teams.
+
 ```javascript
 // eslint.config.js
 import sanity from 'eslint-plugin-sanity'
 
 export default [
+  ...sanity.configs.recommended, // ← start here
+]
+```
+
+The `strict` config treats all rules as errors. Use it if you want zero tolerance for lint warnings (e.g., in CI).
+
+## See It Working
+
+After setup, try this in any `.ts` or `.js` file:
+
+```typescript
+import { groq } from 'next-sanity'
+
+// This query has a performance issue - joins inside filters are expensive:
+const query = groq`*[_type == "post" && author->name == "John"]`
+```
+
+You should see:
+
+```
+error  Avoid joins (`->`) inside filters. They cause a full scan.
+       Consider fetching the author separately or restructuring the query.  sanity/groq-join-in-filter
+```
+
+If you see this error, it's working. If not, check the [Troubleshooting](#troubleshooting) section.
+
+## When GROQ Linting Matters (and When It Doesn't)
+
+The GROQ rules focus on **query performance**, not correctness. They catch patterns that are expensive at scale—joins in filters, deep pagination, repeated dereferences.
+
+**These rules matter most when:**
+
+- Queries run on every page load (not cached)
+- You're querying large datasets
+- Response time affects user experience
+
+**They matter less when:**
+
+- Results are cached (CDN, ISR, static generation)
+- You're running one-off queries (migrations, audits)
+- Dataset is small and performance isn't a concern
+
+You can disable individual rules or set them to `warn` instead of `error` based on your use case:
+
+```javascript
+// eslint.config.js
+export default [
   ...sanity.configs.recommended,
-  // or for stricter checking:
-  // ...sanity.configs.strict,
+  {
+    rules: {
+      'sanity/groq-join-in-filter': 'warn', // downgrade to warning
+      'sanity/groq-deep-pagination': 'off', // disable entirely
+    },
+  },
 ]
 ```
 
