@@ -131,11 +131,71 @@ npx sanity schema extract
 
 ## Monorepo Setup
 
-When using eslint-plugin-sanity in a monorepo (turborepo, pnpm workspaces, etc.), VS Code/Cursor may have trouble finding the ESLint config for nested packages.
+When using eslint-plugin-sanity in a monorepo (Turborepo, pnpm workspaces, etc.), the recommended approach is a **root-level ESLint config** that applies to all packages.
+
+### Next.js + Sanity Monorepo (Recommended)
+
+For monorepos with Next.js and Sanity Studio, create `eslint.config.mjs` at the **root**:
+
+```javascript
+// eslint.config.mjs
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { FlatCompat } from '@eslint/eslintrc'
+import sanity from 'eslint-plugin-sanity'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+})
+
+export default [
+  // Global ignores
+  {
+    ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/sanity.types.ts'],
+  },
+
+  // Sanity GROQ and schema linting for all packages
+  ...sanity.configs.recommended,
+
+  // Next.js rules (scoped to web app)
+  ...compat.extends('next/core-web-vitals').map((config) => ({
+    ...config,
+    files: ['apps/web/**/*.{js,jsx,ts,tsx}'],
+    settings: {
+      ...config.settings,
+      next: { rootDir: 'apps/web' },
+      react: { version: 'detect' },
+    },
+  })),
+]
+```
+
+**Required root dependencies:**
+
+```bash
+pnpm add -D -w eslint eslint-plugin-sanity @eslint/eslintrc \
+  eslint-config-next eslint-plugin-react eslint-plugin-react-hooks \
+  eslint-plugin-jsx-a11y eslint-plugin-import @next/eslint-plugin-next
+```
+
+> **Important:** When using `eslint-config-next` with `FlatCompat`, pin `@next/eslint-plugin-next` to the same version as `eslint-config-next` to avoid compatibility issues.
 
 ### VS Code / Cursor Settings
 
 Create `.vscode/settings.json` at your **monorepo root**:
+
+```json
+{
+  "eslint.useFlatConfig": true
+}
+```
+
+### Alternative: Per-Package Configs
+
+If you prefer separate configs per package, use `eslint.workingDirectories`:
 
 ```json
 {
@@ -146,11 +206,7 @@ Create `.vscode/settings.json` at your **monorepo root**:
 }
 ```
 
-Replace the paths with your actual package directories that have ESLint configs.
-
-### Alternative: Auto-detect
-
-You can also let ESLint auto-detect working directories:
+Or auto-detect:
 
 ```json
 {
@@ -160,13 +216,20 @@ You can also let ESLint auto-detect working directories:
 
 ### Troubleshooting
 
-If rules still don't appear in the editor:
+**ESLint extension not showing errors:**
 
-1. **Restart ESLint Server**: `Cmd+Shift+P` → "ESLint: Restart ESLint Server"
-2. **Check ESLint Output**: View → Output → select "ESLint" to see errors
-3. **Verify flat config**: Ensure `eslint.config.mjs` exists in your package directory
+1. **Check ESLint Output**: `Cmd+Shift+P` → "ESLint: Show Output Channel" - look for config loading errors
+2. **Restart ESLint Server**: `Cmd+Shift+P` → "ESLint: Restart ESLint Server"
+3. **Verify extension is enabled**: Check that the ESLint extension is enabled for your workspace
+4. **Missing dependencies**: Ensure all peer dependencies are installed at root level
 
-> **Note**: The CLI (`npx eslint .`) works regardless of these settings. This is purely for editor integration.
+**Common errors:**
+
+- `Failed to load config "next/core-web-vitals"` - Install `eslint-config-next` at root
+- `Cannot find module 'eslint-plugin-react-hooks'` - Install Next.js ESLint peer deps at root
+- `Unexpected top-level property "name"` - Version mismatch between `eslint-config-next` and `@next/eslint-plugin-next`
+
+> **Note**: The CLI (`npx eslint .`) may work even when the extension doesn't. Check the ESLint Output panel for config loading errors.
 
 ## License
 
