@@ -43,13 +43,37 @@ npm install eslint-plugin-sanity
 ## Usage with ESLint
 
 ```javascript
-// eslint.config.js
+// eslint.config.mjs
 import sanity from 'eslint-plugin-sanity'
 
 export default [
   ...sanity.configs.recommended,
   // or for stricter checking:
   // ...sanity.configs.strict,
+]
+```
+
+### TypeScript Setup
+
+For TypeScript files (`.ts`, `.tsx`), you need a TypeScript parser. Most projects already have this via `eslint-config-next/typescript` or `@typescript-eslint/eslint-plugin`.
+
+If you see parsing errors like `Unexpected token as`, add the parser:
+
+```bash
+npm install @typescript-eslint/parser
+```
+
+```javascript
+// eslint.config.mjs
+import sanity from 'eslint-plugin-sanity'
+import tsParser from '@typescript-eslint/parser'
+
+export default [
+  ...sanity.configs.recommended,
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: { parser: tsParser },
+  },
 ]
 ```
 
