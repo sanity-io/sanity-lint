@@ -110,9 +110,36 @@ npx sanity schema extract
 
 When using eslint-plugin-sanity in a monorepo (Turborepo, pnpm workspaces, etc.), the recommended approach is a **root-level ESLint config** that applies to all packages.
 
-### Next.js + Sanity Monorepo (Recommended)
+### Basic Setup (Any Project)
 
-For monorepos with Next.js and Sanity Studio, create `eslint.config.mjs` at the **root**:
+For monorepos without Next.js, create `eslint.config.mjs` at the **root**:
+
+```javascript
+// eslint.config.mjs
+import sanity from 'eslint-plugin-sanity'
+
+export default [
+  // Global ignores
+  {
+    ignores: ['**/node_modules/**', '**/dist/**', '**/sanity.types.ts'],
+  },
+
+  // Sanity GROQ and schema linting for all packages
+  ...sanity.configs.recommended,
+]
+```
+
+**Required dependencies:**
+
+```bash
+pnpm add -D -w eslint eslint-plugin-sanity
+```
+
+That's it! This works for any JavaScript/TypeScript monorepo.
+
+### Next.js + Sanity Monorepo
+
+If you're using Next.js and want to combine its ESLint rules with Sanity linting:
 
 ```javascript
 // eslint.config.mjs
@@ -150,15 +177,19 @@ export default [
 ]
 ```
 
-**Required root dependencies:**
+**Additional dependencies for Next.js:**
 
 ```bash
-pnpm add -D -w eslint eslint-plugin-sanity @eslint/eslintrc \
-  eslint-config-next eslint-plugin-react eslint-plugin-react-hooks \
+# Core deps
+pnpm add -D -w eslint eslint-plugin-sanity
+
+# Next.js ESLint integration (FlatCompat + peer deps)
+pnpm add -D -w @eslint/eslintrc eslint-config-next \
+  eslint-plugin-react eslint-plugin-react-hooks \
   eslint-plugin-jsx-a11y eslint-plugin-import @next/eslint-plugin-next
 ```
 
-> **Important:** When using `eslint-config-next` with `FlatCompat`, pin `@next/eslint-plugin-next` to the same version as `eslint-config-next` to avoid compatibility issues.
+> **Note:** The extra deps (`eslint-config-next`, `eslint-plugin-react`, etc.) are peer dependencies of `eslint-config-next` that pnpm doesn't auto-install at root level. Pin `@next/eslint-plugin-next` to the same version as `eslint-config-next` to avoid compatibility issues.
 
 ### VS Code / Cursor Settings
 
